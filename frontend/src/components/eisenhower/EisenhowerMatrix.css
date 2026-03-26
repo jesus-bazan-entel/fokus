@@ -1,0 +1,85 @@
+.eisenhower-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+  min-height: calc(100vh - 160px);
+  position: relative;
+  padding: 30px 0 0 30px;
+}
+
+.axis-label {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.axis-y-top { left: 0; top: 50px; writing-mode: vertical-lr; transform: rotate(180deg); }
+.axis-y-bottom { left: 0; bottom: 50px; writing-mode: vertical-lr; transform: rotate(180deg); }
+.axis-x-left { top: 8px; left: 100px; }
+.axis-x-right { top: 8px; right: 100px; }
+
+.quadrant {
+  border-radius: var(--radius);
+  padding: 16px;
+  border: 1px solid var(--color-border);
+}
+
+.quadrant-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.quadrant-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.quadrant-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.quadrant-count {
+  background: var(--color-surface);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 12px;
+  color: var(--color-text-secondary);
+}
+
+.quadrant-subtitle {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.quadrant-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quadrant-task {
+  padding: 10px;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+
+.quadrant-task:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.quadrant-empty {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 20px;
+}

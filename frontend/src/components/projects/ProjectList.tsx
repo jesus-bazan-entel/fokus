@@ -1,0 +1,109 @@
+import { useState } from 'react'
+import type { Project } from '../../types'
+import './ProjectList.css'
+
+const COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16']
+
+interface Props {
+  projects: Project[]
+  onSave: (data: Partial<Project>) => void
+  onDelete: (id: string) => void
+}
+
+export default function ProjectList({ projects, onSave, onDelete }: Props) {
+  const [editing, setEditing] = useState<Project | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [color, setColor] = useState(COLORS[0])
+
+  const openNew = () => {
+    setEditing(null)
+    setName('')
+    setDescription('')
+    setColor(COLORS[0])
+    setShowForm(true)
+  }
+
+  const openEdit = (p: Project) => {
+    setEditing(p)
+    setName(p.name)
+    setDescription(p.description)
+    setColor(p.color)
+    setShowForm(true)
+  }
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSave({ ...(editing ? { id: editing.id } : {}), name, description, color })
+    setShowForm(false)
+  }
+
+  return (
+    <div>
+      <div className="projects-header">
+        <h2>Proyectos</h2>
+        <button className="btn btn-primary" onClick={openNew}>+ Nuevo proyecto</button>
+      </div>
+
+      {showForm && (
+        <div className="dialog-overlay" onClick={() => setShowForm(false)}>
+          <div className="dialog card" onClick={e => e.stopPropagation()}>
+            <div className="dialog-header">
+              <h2>{editing ? 'Editar proyecto' : 'Nuevo proyecto'}</h2>
+              <button className="close-btn" onClick={() => setShowForm(false)}>&times;</button>
+            </div>
+            <form onSubmit={handleSave} className="dialog-form">
+              <div className="form-group">
+                <label>Nombre</label>
+                <input className="input" value={name} onChange={e => setName(e.target.value)} required placeholder="Nombre del proyecto" />
+              </div>
+              <div className="form-group">
+                <label>Descripcion</label>
+                <textarea className="input" rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="Descripcion breve..." />
+              </div>
+              <div className="form-group">
+                <label>Color</label>
+                <div className="color-picker">
+                  {COLORS.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`color-swatch ${c === color ? 'active' : ''}`}
+                      style={{ background: c }}
+                      onClick={() => setColor(c)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="dialog-actions">
+                <div style={{ flex: 1 }} />
+                <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary">{editing ? 'Guardar' : 'Crear'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="projects-grid">
+        {projects.map(p => (
+          <div key={p.id} className="project-card card">
+            <div className="project-color-bar" style={{ background: p.color }} />
+            <div className="project-card-body">
+              <h3>{p.name}</h3>
+              <p className="project-desc">{p.description}</p>
+              <div className="project-actions">
+                <button className="btn btn-secondary btn-sm" onClick={() => openEdit(p)}>Editar</button>
+                <button className="btn btn-danger btn-sm" onClick={() => onDelete(p.id)}>Eliminar</button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {projects.length === 0 && (
+          <p className="empty-message">No hay proyectos. Crea uno para empezar.</p>
+        )}
+      </div>
+    </div>
+  )
+}
