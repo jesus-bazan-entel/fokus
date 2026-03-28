@@ -1,0 +1,244 @@
+.gantt-dialog {
+  max-width: 960px;
+  width: 95vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.gantt-dialog .dialog-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.gantt-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gantt-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.gantt-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.gantt-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Legend */
+.gantt-legend {
+  display: flex;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.gantt-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.gantt-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+/* Timeline header */
+.gantt-timeline {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.gantt-labels-header {
+  width: 200px;
+  min-width: 200px;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-right: 1px solid var(--color-border);
+}
+
+.gantt-bars-header {
+  flex: 1;
+  position: relative;
+  height: 32px;
+}
+
+.gantt-week-marker {
+  position: absolute;
+  top: 0;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  padding: 8px 0 0 4px;
+  white-space: nowrap;
+}
+
+.gantt-today-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+}
+
+.gantt-today-label {
+  position: absolute;
+  top: 4px;
+  left: -12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-danger);
+  background: #fef2f2;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Body */
+.gantt-body {
+  min-height: 100px;
+}
+
+.gantt-row {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  min-height: 40px;
+}
+
+.gantt-row.even {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.gantt-row:hover {
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.gantt-label {
+  width: 200px;
+  min-width: 200px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  border-right: 1px solid var(--color-border);
+}
+
+.gantt-task-name {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gantt-task-date {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+}
+
+.gantt-bar-area {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.gantt-grid-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
+  opacity: 0.5;
+}
+
+.gantt-today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-danger);
+  z-index: 1;
+  opacity: 0.6;
+}
+
+/* Task bars */
+.gantt-bar {
+  position: absolute;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  z-index: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.gantt-bar:hover {
+  transform: scaleY(1.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.gantt-bar.bar-done {
+  opacity: 0.75;
+}
+
+.gantt-bar.bar-overdue {
+  animation: pulse-overdue 2s ease-in-out infinite;
+}
+
+@keyframes pulse-overdue {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.gantt-bar-label {
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Summary */
+.gantt-summary {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-top: 1px solid var(--color-border);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  background: var(--color-bg);
+}

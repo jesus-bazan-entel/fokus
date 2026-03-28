@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Project, Task, ProjectStatus } from '../../types'
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from '../../types'
 import ImportExcel from '../ImportExcel'
+import GanttChart from './GanttChart'
 import './ProjectList.css'
 
 const COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16']
@@ -46,6 +47,7 @@ function ProgressBar({ tasks }: { tasks: Task[] }) {
 export default function ProjectList({ projects, tasks, onSave, onDelete, onImportComplete }: Props) {
   const [editing, setEditing] = useState<Project | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [ganttProject, setGanttProject] = useState<Project | null>(null)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [color, setColor] = useState(COLORS[0])
@@ -139,6 +141,7 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
                 <p className="project-desc">{p.description}</p>
                 <ProgressBar tasks={pTasks} />
                 <div className="project-actions">
+                  <button className="btn btn-gantt btn-sm" onClick={() => setGanttProject(p)}>Gantt</button>
                   <button className="btn btn-secondary btn-sm" onClick={() => openEdit(p)}>Editar</button>
                   <button className="btn btn-danger btn-sm" onClick={() => onDelete(p.id)}>Eliminar</button>
                 </div>
@@ -150,6 +153,15 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
           <p className="empty-message">No hay proyectos. Crea uno para empezar.</p>
         )}
       </div>
+
+      {ganttProject && (
+        <GanttChart
+          projectName={ganttProject.name}
+          projectColor={ganttProject.color}
+          tasks={getProjectTasks(ganttProject.id)}
+          onClose={() => setGanttProject(null)}
+        />
+      )}
     </div>
   )
 }

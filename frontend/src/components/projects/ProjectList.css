@@ -94,6 +94,16 @@
   gap: 8px;
 }
 
+.btn-gantt {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+}
+
+.btn-gantt:hover {
+  opacity: 0.9;
+}
+
 .color-picker {
   display: flex;
   gap: 8px;
