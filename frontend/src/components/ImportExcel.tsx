@@ -36,23 +36,45 @@ function parseStatus(raw: string): TaskStatus {
   return STATUS_MAP[normalized] || 'todo'
 }
 
-function parseDate(raw: string | number | undefined): string | undefined {
-  if (!raw) return undefined
+function parseDate(raw: unknown): string | undefined {
+  if (raw == null || raw === '') return undefined
+
+  // JS Date object (from XLSX cellDates: true)
+  if (raw instanceof Date) {
+    if (isNaN(raw.getTime())) return undefined
+    return raw.toISOString().split('T')[0]
+  }
+
   // Excel serial date number
   if (typeof raw === 'number') {
-    const date = new Date((raw - 25569) * 86400 * 1000)
+    if (raw < 1 || raw > 200000) return undefined
+    const utcDays = raw - 25569
+    const date = new Date(utcDays * 86400 * 1000)
     return date.toISOString().split('T')[0]
   }
+
   const str = String(raw).trim()
   if (!str) return undefined
-  // DD/MM/YYYY
+
+  // String that looks like a serial number (e.g. "46106")
+  if (/^\d{4,6}$/.test(str)) {
+    const serial = parseInt(str, 10)
+    if (serial > 1 && serial < 200000) {
+      const utcDays = serial - 25569
+      const date = new Date(utcDays * 86400 * 1000)
+      return date.toISOString().split('T')[0]
+    }
+  }
+
+  // DD/MM/YYYY or D/MM/YYYY
   const parts = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
   if (parts) {
     return `${parts[3]}-${parts[2].padStart(2, '0')}-${parts[1].padStart(2, '0')}`
   }
-  // Try native parse
-  const d = new Date(str)
-  if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
+
+  // YYYY-MM-DD already
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str
+
   return undefined
 }
 
@@ -83,9 +105,9 @@ export default function ImportExcel({ onImportComplete }: Props) {
     reader.onload = (evt) => {
       try {
         const data = new Uint8Array(evt.target!.result as ArrayBuffer)
-        const workbook = XLSX.read(data, { type: 'array' })
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true })
         const sheet = workbook.Sheets[workbook.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
+        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '', raw: false })
 
         if (jsonData.length === 0) {
           setError('El archivo esta vacio')
@@ -124,12 +146,15 @@ export default function ImportExcel({ onImportComplete }: Props) {
           // Skip completely empty rows
           if (!tarea && !mapped.estado) continue
 
+          // Get the ETA value - use mapped string (raw: false gives formatted dates)
+          const etaValue = mapped.eta || ''
+
           parsed.push({
             tarea,
             proyecto: proyecto || 'Sin proyecto',
             estado: mapped.estado || 'Pendiente',
             responsable: mapped.responsable || '',
-            eta: String(row[Object.keys(headerMap).find(k => headerMap[k] === 'eta') || ''] ?? ''),
+            eta: etaValue,
             acciones: mapped.acciones || '',
           })
         }
@@ -171,6 +196,7 @@ export default function ImportExcel({ onImportComplete }: Props) {
       // 4. Create tasks
       setProgress(`Creando ${rows.length} tarea(s)...`)
       let created = 0
+      let errors = 0
       for (const row of rows) {
         const project = projectMap.get(row.proyecto.toLowerCase())
         if (!project) continue
@@ -183,20 +209,28 @@ export default function ImportExcel({ onImportComplete }: Props) {
           row.acciones || '',
         ].filter(Boolean).join('\n')
 
-        await tasksApi.create({
-          title: row.tarea,
-          description,
-          status,
-          priority: 'not_urgent',
-          importance: 'important',
-          project_id: project.id,
-          due_date: dueDate,
-        })
-        created++
-        setProgress(`Creando tareas... ${created}/${rows.length}`)
+        try {
+          await tasksApi.create({
+            title: row.tarea,
+            description,
+            status,
+            priority: 'not_urgent',
+            importance: 'important',
+            project_id: project.id,
+            due_date: dueDate || undefined,
+          })
+          created++
+        } catch (taskErr) {
+          console.error(`Error creando tarea "${row.tarea}":`, taskErr)
+          errors++
+        }
+        setProgress(`Creando tareas... ${created + errors}/${rows.length}`)
       }
 
-      setProgress(`Listo! ${projectNames.length} proyecto(s) y ${created} tarea(s) creadas.`)
+      const msg = errors > 0
+        ? `Listo! ${created} tarea(s) creadas, ${errors} con error.`
+        : `Listo! ${projectNames.length} proyecto(s) y ${created} tarea(s) creadas.`
+      setProgress(msg)
       setTimeout(() => {
         setShowModal(false)
         setRows([])
