@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { Project } from '../../types'
+import type { Project, Task, ProjectStatus } from '../../types'
+import { computeProjectStatus, PROJECT_STATUS_CONFIG } from '../../types'
 import ImportExcel from '../ImportExcel'
 import './ProjectList.css'
 
@@ -7,12 +8,42 @@ const COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6'
 
 interface Props {
   projects: Project[]
+  tasks: Task[]
   onSave: (data: Partial<Project>) => void
   onDelete: (id: string) => void
   onImportComplete: () => void
 }
 
-export default function ProjectList({ projects, onSave, onDelete, onImportComplete }: Props) {
+function StatusBadge({ status }: { status: ProjectStatus }) {
+  const config = PROJECT_STATUS_CONFIG[status]
+  return (
+    <span className="project-status-badge" style={{ background: config.bg, color: config.color }}>
+      <span className="status-dot" style={{ background: config.color }} />
+      {config.label}
+    </span>
+  )
+}
+
+function ProgressBar({ tasks }: { tasks: Task[] }) {
+  const total = tasks.length
+  if (total === 0) return null
+  const done = tasks.filter(t => t.status === 'done').length
+  const inProgress = tasks.filter(t => t.status === 'in_progress').length
+  const pctDone = (done / total) * 100
+  const pctInProgress = (inProgress / total) * 100
+
+  return (
+    <div className="project-progress">
+      <div className="progress-bar">
+        <div className="progress-done" style={{ width: `${pctDone}%` }} />
+        <div className="progress-in-progress" style={{ width: `${pctInProgress}%` }} />
+      </div>
+      <span className="progress-text">{done}/{total} completadas</span>
+    </div>
+  )
+}
+
+export default function ProjectList({ projects, tasks, onSave, onDelete, onImportComplete }: Props) {
   const [editing, setEditing] = useState<Project | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -40,6 +71,8 @@ export default function ProjectList({ projects, onSave, onDelete, onImportComple
     onSave({ ...(editing ? { id: editing.id } : {}), name, description, color })
     setShowForm(false)
   }
+
+  const getProjectTasks = (projectId: string) => tasks.filter(t => t.project_id === projectId)
 
   return (
     <div>
@@ -92,19 +125,27 @@ export default function ProjectList({ projects, onSave, onDelete, onImportComple
       )}
 
       <div className="projects-grid">
-        {projects.map(p => (
-          <div key={p.id} className="project-card card">
-            <div className="project-color-bar" style={{ background: p.color }} />
-            <div className="project-card-body">
-              <h3>{p.name}</h3>
-              <p className="project-desc">{p.description}</p>
-              <div className="project-actions">
-                <button className="btn btn-secondary btn-sm" onClick={() => openEdit(p)}>Editar</button>
-                <button className="btn btn-danger btn-sm" onClick={() => onDelete(p.id)}>Eliminar</button>
+        {projects.map(p => {
+          const pTasks = getProjectTasks(p.id)
+          const computedStatus = computeProjectStatus(pTasks)
+          return (
+            <div key={p.id} className="project-card card">
+              <div className="project-color-bar" style={{ background: p.color }} />
+              <div className="project-card-body">
+                <div className="project-card-top">
+                  <h3>{p.name}</h3>
+                  <StatusBadge status={computedStatus} />
+                </div>
+                <p className="project-desc">{p.description}</p>
+                <ProgressBar tasks={pTasks} />
+                <div className="project-actions">
+                  <button className="btn btn-secondary btn-sm" onClick={() => openEdit(p)}>Editar</button>
+                  <button className="btn btn-danger btn-sm" onClick={() => onDelete(p.id)}>Eliminar</button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
         {projects.length === 0 && (
           <p className="empty-message">No hay proyectos. Crea uno para empezar.</p>
         )}

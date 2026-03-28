@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import KanbanBoard from '../components/kanban/KanbanBoard'
 import TaskDialog from '../components/TaskDialog'
+import AlertPanel from '../components/AlertPanel'
 import { tasksApi, projectsApi } from '../lib/api'
+import { getTaskAlerts } from '../types'
 import type { Task, TaskStatus, Project } from '../types'
 
 export default function KanbanPage() {
@@ -25,6 +27,8 @@ export default function KanbanPage() {
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
+
+  const alerts = getTaskAlerts(tasks)
 
   const handleTaskMove = async (taskId: string, status: TaskStatus, position: number) => {
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status, position } : t))
@@ -72,6 +76,11 @@ export default function KanbanPage() {
     setShowDialog(true)
   }
 
+  const handleAlertClick = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId)
+    if (task) handleTaskClick(task)
+  }
+
   if (loading) return <p>Cargando tablero...</p>
 
   return (
@@ -79,6 +88,7 @@ export default function KanbanPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2>Tablero Kanban</h2>
       </div>
+      {alerts.length > 0 && <AlertPanel alerts={alerts} onTaskClick={handleAlertClick} />}
       <KanbanBoard tasks={tasks} onTaskMove={handleTaskMove} onTaskClick={handleTaskClick} onAddTask={handleAddTask} />
       {showDialog && (
         <TaskDialog

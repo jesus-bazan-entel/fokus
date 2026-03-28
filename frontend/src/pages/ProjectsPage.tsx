@@ -1,24 +1,26 @@
 import { useState, useEffect, useCallback } from 'react'
 import ProjectList from '../components/projects/ProjectList'
-import { projectsApi } from '../lib/api'
-import type { Project } from '../types'
+import { projectsApi, tasksApi } from '../lib/api'
+import type { Project, Task } from '../types'
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
-  const loadProjects = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
-      const data = await projectsApi.list()
-      setProjects(data)
+      const [p, t] = await Promise.all([projectsApi.list(), tasksApi.list()])
+      setProjects(p)
+      setTasks(t)
     } catch (err) {
-      console.error('Error loading projects:', err)
+      console.error('Error loading data:', err)
     } finally {
       setLoading(false)
     }
   }, [])
 
-  useEffect(() => { loadProjects() }, [loadProjects])
+  useEffect(() => { loadData() }, [loadData])
 
   const handleSave = async (data: Partial<Project>) => {
     try {
@@ -27,7 +29,7 @@ export default function ProjectsPage() {
       } else {
         await projectsApi.create(data)
       }
-      await loadProjects()
+      await loadData()
     } catch (err) {
       console.error('Error saving project:', err)
     }
@@ -37,7 +39,7 @@ export default function ProjectsPage() {
     if (!confirm('Eliminar este proyecto y todas sus tareas?')) return
     try {
       await projectsApi.delete(id)
-      await loadProjects()
+      await loadData()
     } catch (err) {
       console.error('Error deleting project:', err)
     }
@@ -45,5 +47,5 @@ export default function ProjectsPage() {
 
   if (loading) return <p>Cargando proyectos...</p>
 
-  return <ProjectList projects={projects} onSave={handleSave} onDelete={handleDelete} onImportComplete={loadProjects} />
+  return <ProjectList projects={projects} tasks={tasks} onSave={handleSave} onDelete={handleDelete} onImportComplete={loadData} />
 }
