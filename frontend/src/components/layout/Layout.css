@@ -28,6 +28,46 @@
   letter-spacing: -0.5px;
 }
 
+.workspace-switcher {
+  display: flex;
+  gap: 6px;
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.workspace-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 6px;
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.workspace-btn:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.workspace-btn.active {
+  color: var(--color-text);
+}
+
+.workspace-icon {
+  font-size: 14px;
+}
+
+.workspace-label {
+  white-space: nowrap;
+}
+
 .sidebar-nav {
   flex: 1;
   padding: 12px;

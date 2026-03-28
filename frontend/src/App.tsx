@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
+import { WorkspaceProvider } from './context/WorkspaceContext'
 import Layout from './components/layout/Layout'
 import LoginPage from './pages/LoginPage'
 import KanbanPage from './pages/KanbanPage'
@@ -22,13 +23,15 @@ export default function App() {
   }
 
   return (
-    <Layout user={user} onSignOut={signOut}>
-      <Routes>
-        <Route path="/" element={<Navigate to="/kanban" replace />} />
-        <Route path="/kanban" element={<KanbanPage />} />
-        <Route path="/eisenhower" element={<EisenhowerPage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-      </Routes>
-    </Layout>
+    <WorkspaceProvider>
+      <Layout user={user} onSignOut={signOut}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/kanban" replace />} />
+          <Route path="/kanban" element={<KanbanPage />} />
+          <Route path="/eisenhower" element={<EisenhowerPage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+        </Routes>
+      </Layout>
+    </WorkspaceProvider>
   )
 }

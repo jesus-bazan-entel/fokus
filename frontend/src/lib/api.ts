@@ -1,13 +1,17 @@
 import { supabase } from './supabase'
-import type { Task, TaskStatus, Project } from '../types'
+import type { Task, TaskStatus, Project, Workspace } from '../types'
 
 // Projects
 export const projectsApi = {
-  async list(): Promise<Project[]> {
-    const { data, error } = await supabase
+  async list(workspace?: Workspace): Promise<Project[]> {
+    let query = supabase
       .from('projects')
       .select('*')
       .order('created_at')
+    if (workspace) {
+      query = query.eq('workspace', workspace)
+    }
+    const { data, error } = await query
     if (error) throw new Error(error.message)
     return data
   },
@@ -45,7 +49,6 @@ export const projectsApi = {
   },
 
   async delete(id: string): Promise<void> {
-    // Tasks are deleted by cascade in DB
     const { error } = await supabase
       .from('projects')
       .delete()
@@ -56,7 +59,7 @@ export const projectsApi = {
 
 // Tasks
 export const tasksApi = {
-  async list(projectId?: string): Promise<Task[]> {
+  async list(workspace?: Workspace, projectId?: string): Promise<Task[]> {
     let query = supabase
       .from('tasks')
       .select('*, project:projects(*)')
@@ -64,8 +67,16 @@ export const tasksApi = {
     if (projectId) {
       query = query.eq('project_id', projectId)
     }
+    if (workspace) {
+      query = query.eq('project.workspace', workspace)
+    }
     const { data, error } = await query
     if (error) throw new Error(error.message)
+    // When filtering by project.workspace, rows with non-matching projects
+    // come back with project: null — filter them out
+    if (workspace) {
+      return (data || []).filter((t: Task) => t.project !== null)
+    }
     return data
   },
 
@@ -80,7 +91,6 @@ export const tasksApi = {
   },
 
   async create(task: Partial<Task>): Promise<Task> {
-    // Get next position
     const { data: existing } = await supabase
       .from('tasks')
       .select('position')

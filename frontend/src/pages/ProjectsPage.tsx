@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import ProjectList from '../components/projects/ProjectList'
 import { projectsApi, tasksApi } from '../lib/api'
+import { useWorkspace } from '../context/WorkspaceContext'
 import type { Project, Task } from '../types'
 
 export default function ProjectsPage() {
+  const { workspace } = useWorkspace()
   const [projects, setProjects] = useState<Project[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
   const loadData = useCallback(async () => {
     try {
-      const [p, t] = await Promise.all([projectsApi.list(), tasksApi.list()])
+      const [p, t] = await Promise.all([projectsApi.list(workspace), tasksApi.list(workspace)])
       setProjects(p)
       setTasks(t)
     } catch (err) {
@@ -18,16 +20,16 @@ export default function ProjectsPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [workspace])
 
-  useEffect(() => { loadData() }, [loadData])
+  useEffect(() => { setLoading(true); loadData() }, [loadData])
 
   const handleSave = async (data: Partial<Project>) => {
     try {
       if (data.id) {
         await projectsApi.update(data.id, data)
       } else {
-        await projectsApi.create(data)
+        await projectsApi.create({ ...data, workspace })
       }
       await loadData()
     } catch (err) {

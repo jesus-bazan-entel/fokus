@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { projectsApi, tasksApi } from '../lib/api'
 import type { TaskStatus } from '../types'
+import { useWorkspace } from '../context/WorkspaceContext'
 import './ImportExcel.css'
 
 interface ExcelRow {
@@ -116,6 +117,7 @@ interface Props {
 }
 
 export default function ImportExcel({ onImportComplete }: Props) {
+  const { workspace } = useWorkspace()
   const [showModal, setShowModal] = useState(false)
   const [rows, setRows] = useState<ExcelRow[]>([])
   const [importing, setImporting] = useState(false)
@@ -209,16 +211,16 @@ export default function ImportExcel({ onImportComplete }: Props) {
       const projectNames = [...new Set(rows.map(r => r.proyecto).filter(Boolean))]
       setProgress(`Creando ${projectNames.length} proyecto(s)...`)
 
-      // 2. Get existing projects
-      const existingProjects = await projectsApi.list()
+      // 2. Get existing projects in current workspace
+      const existingProjects = await projectsApi.list(workspace)
       const projectMap = new Map(existingProjects.map(p => [p.name.toLowerCase(), p]))
 
-      // 3. Create missing projects
+      // 3. Create missing projects in current workspace
       for (let i = 0; i < projectNames.length; i++) {
         const name = projectNames[i]
         if (!projectMap.has(name.toLowerCase())) {
           const color = PROJECT_COLORS[i % PROJECT_COLORS.length]
-          const created = await projectsApi.create({ name, description: '', color })
+          const created = await projectsApi.create({ name, description: '', color, workspace })
           projectMap.set(name.toLowerCase(), created)
         }
       }

@@ -12,6 +12,7 @@ create table if not exists projects (
   name text not null,
   description text default '',
   color text default '#6366f1',
+  workspace text not null default 'corporate' check (workspace in ('personal', 'corporate')),
   owner_id uuid not null references auth.users(id) on delete cascade,
   created_at timestamptz default now(),
   updated_at timestamptz default now()

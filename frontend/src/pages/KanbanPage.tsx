@@ -4,9 +4,11 @@ import TaskDialog from '../components/TaskDialog'
 import AlertPanel from '../components/AlertPanel'
 import { tasksApi, projectsApi } from '../lib/api'
 import { getTaskAlerts } from '../types'
+import { useWorkspace } from '../context/WorkspaceContext'
 import type { Task, TaskStatus, Project } from '../types'
 
 export default function KanbanPage() {
+  const { workspace } = useWorkspace()
   const [tasks, setTasks] = useState<Task[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -16,7 +18,7 @@ export default function KanbanPage() {
 
   const loadData = useCallback(async () => {
     try {
-      const [t, p] = await Promise.all([tasksApi.list(), projectsApi.list()])
+      const [t, p] = await Promise.all([tasksApi.list(workspace), projectsApi.list(workspace)])
       setTasks(t)
       setProjects(p)
     } catch (err) {
@@ -24,9 +26,9 @@ export default function KanbanPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [workspace])
 
-  useEffect(() => { loadData() }, [loadData])
+  useEffect(() => { setLoading(true); loadData() }, [loadData])
 
   const alerts = getTaskAlerts(tasks)
 

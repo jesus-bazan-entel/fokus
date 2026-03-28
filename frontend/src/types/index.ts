@@ -6,12 +6,19 @@ export interface User {
 }
 
 export type ProjectStatus = 'on_track' | 'at_risk' | 'delayed' | 'on_hold'
+export type Workspace = 'personal' | 'corporate'
+
+export const WORKSPACE_CONFIG: Record<Workspace, { label: string; icon: string; color: string }> = {
+  personal: { label: 'Personal', icon: '👤', color: '#8b5cf6' },
+  corporate: { label: 'Corporativo', icon: '🏢', color: '#0ea5e9' },
+}
 
 export interface Project {
   id: string
   name: string
   description: string
   color: string
+  workspace: Workspace
   owner_id: string
   created_at: string
   updated_at: string
