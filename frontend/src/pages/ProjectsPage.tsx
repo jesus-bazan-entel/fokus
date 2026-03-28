@@ -45,5 +45,5 @@ export default function ProjectsPage() {
 
   if (loading) return <p>Cargando proyectos...</p>
 
-  return <ProjectList projects={projects} onSave={handleSave} onDelete={handleDelete} />
+  return <ProjectList projects={projects} onSave={handleSave} onDelete={handleDelete} onImportComplete={loadProjects} />
 }

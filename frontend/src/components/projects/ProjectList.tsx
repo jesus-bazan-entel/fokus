@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Project } from '../../types'
+import ImportExcel from '../ImportExcel'
 import './ProjectList.css'
 
 const COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16']
@@ -8,9 +9,10 @@ interface Props {
   projects: Project[]
   onSave: (data: Partial<Project>) => void
   onDelete: (id: string) => void
+  onImportComplete: () => void
 }
 
-export default function ProjectList({ projects, onSave, onDelete }: Props) {
+export default function ProjectList({ projects, onSave, onDelete, onImportComplete }: Props) {
   const [editing, setEditing] = useState<Project | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -43,7 +45,10 @@ export default function ProjectList({ projects, onSave, onDelete }: Props) {
     <div>
       <div className="projects-header">
         <h2>Proyectos</h2>
-        <button className="btn btn-primary" onClick={openNew}>+ Nuevo proyecto</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ImportExcel onImportComplete={onImportComplete} />
+          <button className="btn btn-primary" onClick={openNew}>+ Nuevo proyecto</button>
+        </div>
       </div>
 
       {showForm && (
