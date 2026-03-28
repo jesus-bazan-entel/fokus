@@ -1,4 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useCallback, useState } from 'react'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 import type { Task } from '../../types'
 import './GanttChart.css'
 
@@ -89,6 +91,56 @@ export default function GanttChart({ projectName, projectColor, tasks, onClose }
   today.setHours(0, 0, 0, 0)
   const todayLeft = (daysBetween(startDate, today) / totalDays) * 100
 
+  const chartRef = useRef<HTMLDivElement>(null)
+  const [exporting, setExporting] = useState(false)
+
+  const captureChart = useCallback(async () => {
+    if (!chartRef.current) return null
+    return html2canvas(chartRef.current, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      logging: false,
+      useCORS: true,
+    })
+  }, [])
+
+  const exportAsJPEG = useCallback(async () => {
+    setExporting(true)
+    try {
+      const canvas = await captureChart()
+      if (!canvas) return
+      const link = document.createElement('a')
+      link.download = `gantt-${projectName.replace(/\s+/g, '-').toLowerCase()}.jpg`
+      link.href = canvas.toDataURL('image/jpeg', 0.95)
+      link.click()
+    } finally {
+      setExporting(false)
+    }
+  }, [captureChart, projectName])
+
+  const exportAsPDF = useCallback(async () => {
+    setExporting(true)
+    try {
+      const canvas = await captureChart()
+      if (!canvas) return
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+
+      // Landscape A4
+      const pdf = new jsPDF({
+        orientation: imgWidth > imgHeight ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [imgWidth / 2, imgHeight / 2],
+      })
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth / 2, imgHeight / 2)
+      pdf.save(`gantt-${projectName.replace(/\s+/g, '-').toLowerCase()}.pdf`)
+    } finally {
+      setExporting(false)
+    }
+  }, [captureChart, projectName])
+
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="gantt-dialog card" onClick={e => e.stopPropagation()}>
@@ -97,7 +149,19 @@ export default function GanttChart({ projectName, projectColor, tasks, onClose }
             <span className="gantt-dot" style={{ background: projectColor }} />
             <h2>Gantt - {projectName}</h2>
           </div>
-          <button className="close-btn" onClick={onClose}>&times;</button>
+          <div className="gantt-header-actions">
+            {ganttTasks.length > 0 && (
+              <>
+                <button className="btn btn-secondary btn-sm" onClick={exportAsJPEG} disabled={exporting}>
+                  {exporting ? '...' : 'JPEG'}
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={exportAsPDF} disabled={exporting}>
+                  {exporting ? '...' : 'PDF'}
+                </button>
+              </>
+            )}
+            <button className="close-btn" onClick={onClose}>&times;</button>
+          </div>
         </div>
 
         {ganttTasks.length === 0 ? (
@@ -105,7 +169,7 @@ export default function GanttChart({ projectName, projectColor, tasks, onClose }
             <p>No hay tareas con fechas para mostrar el diagrama.</p>
           </div>
         ) : (
-          <div className="gantt-container">
+          <div className="gantt-container" ref={chartRef}>
             {/* Legend */}
             <div className="gantt-legend">
               {Object.entries(STATUS_LABELS).map(([key, label]) => (
