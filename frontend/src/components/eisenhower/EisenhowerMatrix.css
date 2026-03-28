@@ -73,8 +73,27 @@
   transition: box-shadow 0.15s;
 }
 
+.quadrant-task {
+  cursor: grab;
+}
+
 .quadrant-task:hover {
   box-shadow: var(--shadow-lg);
+}
+
+.quadrant-task.dragging {
+  cursor: grabbing;
+}
+
+.quadrant.quadrant-over {
+  border-color: var(--color-primary);
+}
+
+.drop-hint {
+  color: var(--color-primary) !important;
+  font-weight: 500;
+  border: 2px dashed var(--color-primary);
+  border-radius: var(--radius);
 }
 
 .quadrant-empty {

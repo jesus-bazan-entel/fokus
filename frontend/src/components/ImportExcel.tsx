@@ -42,7 +42,10 @@ function parseDate(raw: unknown): string | undefined {
   // JS Date object (from XLSX cellDates: true)
   if (raw instanceof Date) {
     if (isNaN(raw.getTime())) return undefined
-    return raw.toISOString().split('T')[0]
+    const y = raw.getFullYear()
+    const m = String(raw.getMonth() + 1).padStart(2, '0')
+    const d = String(raw.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
   }
 
   // Excel serial date number
@@ -50,7 +53,10 @@ function parseDate(raw: unknown): string | undefined {
     if (raw < 1 || raw > 200000) return undefined
     const utcDays = raw - 25569
     const date = new Date(utcDays * 86400 * 1000)
-    return date.toISOString().split('T')[0]
+    const y = date.getUTCFullYear()
+    const m = String(date.getUTCMonth() + 1).padStart(2, '0')
+    const d = String(date.getUTCDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
   }
 
   const str = String(raw).trim()
@@ -62,18 +68,39 @@ function parseDate(raw: unknown): string | undefined {
     if (serial > 1 && serial < 200000) {
       const utcDays = serial - 25569
       const date = new Date(utcDays * 86400 * 1000)
-      return date.toISOString().split('T')[0]
+      const y = date.getUTCFullYear()
+      const m = String(date.getUTCMonth() + 1).padStart(2, '0')
+      const d = String(date.getUTCDate()).padStart(2, '0')
+      return `${y}-${m}-${d}`
     }
-  }
-
-  // DD/MM/YYYY or D/MM/YYYY
-  const parts = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
-  if (parts) {
-    return `${parts[3]}-${parts[2].padStart(2, '0')}-${parts[1].padStart(2, '0')}`
   }
 
   // YYYY-MM-DD already
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str
+
+  // DD/MM/YYYY or D/M/YYYY (most common in Spanish)
+  const dmy = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/)
+  if (dmy) {
+    return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`
+  }
+
+  // MM/DD/YYYY (US format fallback)
+  const mdy = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2})$/)
+  if (mdy) {
+    const year = parseInt(mdy[3], 10) + 2000
+    return `${year}-${mdy[1].padStart(2, '0')}-${mdy[2].padStart(2, '0')}`
+  }
+
+  // Formats like "25 Mar 2026", "Mar 25, 2026", "2026/03/25", etc.
+  const d = new Date(str)
+  if (!isNaN(d.getTime())) {
+    const y = d.getFullYear()
+    if (y > 1990 && y < 2100) {
+      const mo = String(d.getMonth() + 1).padStart(2, '0')
+      const da = String(d.getDate()).padStart(2, '0')
+      return `${y}-${mo}-${da}`
+    }
+  }
 
   return undefined
 }
@@ -107,7 +134,8 @@ export default function ImportExcel({ onImportComplete }: Props) {
         const data = new Uint8Array(evt.target!.result as ArrayBuffer)
         const workbook = XLSX.read(data, { type: 'array', cellDates: true })
         const sheet = workbook.Sheets[workbook.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '', raw: false })
+        // Use raw: true so dates come as Date objects (cellDates) or numbers
+        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
 
         if (jsonData.length === 0) {
           setError('El archivo esta vacio')
@@ -146,15 +174,17 @@ export default function ImportExcel({ onImportComplete }: Props) {
           // Skip completely empty rows
           if (!tarea && !mapped.estado) continue
 
-          // Get the ETA value - use mapped string (raw: false gives formatted dates)
-          const etaValue = mapped.eta || ''
+          // Get the raw ETA value (Date object, number, or string)
+          const etaKey = Object.keys(headerMap).find(k => headerMap[k] === 'eta')
+          const rawEta = etaKey ? row[etaKey] : undefined
+          const parsedDate = parseDate(rawEta)
 
           parsed.push({
             tarea,
             proyecto: proyecto || 'Sin proyecto',
             estado: mapped.estado || 'Pendiente',
             responsable: mapped.responsable || '',
-            eta: etaValue,
+            eta: parsedDate || '',
             acciones: mapped.acciones || '',
           })
         }
@@ -202,7 +232,7 @@ export default function ImportExcel({ onImportComplete }: Props) {
         if (!project) continue
 
         const status = parseStatus(row.estado)
-        const dueDate = parseDate(row.eta)
+        const dueDate = row.eta || undefined
 
         const description = [
           row.responsable ? `Responsable: ${row.responsable}` : '',
@@ -285,7 +315,7 @@ export default function ImportExcel({ onImportComplete }: Props) {
                       <td className="cell-task">{row.tarea}</td>
                       <td><span className="preview-project">{row.proyecto}</span></td>
                       <td><span className={`preview-status status-${parseStatus(row.estado)}`}>{row.estado}</span></td>
-                      <td className="cell-date">{parseDate(row.eta) || '-'}</td>
+                      <td className="cell-date">{row.eta || '-'}</td>
                     </tr>
                   ))}
                 </tbody>

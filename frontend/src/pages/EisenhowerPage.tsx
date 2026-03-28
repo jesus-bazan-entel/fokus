@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import EisenhowerMatrix from '../components/eisenhower/EisenhowerMatrix'
 import TaskDialog from '../components/TaskDialog'
 import { tasksApi, projectsApi } from '../lib/api'
-import type { Task, Project } from '../types'
+import type { Task, TaskPriority, TaskImportance, Project } from '../types'
 
 export default function EisenhowerPage() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -24,6 +24,16 @@ export default function EisenhowerPage() {
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
+
+  const handleTaskMove = async (taskId: string, priority: TaskPriority, importance: TaskImportance) => {
+    // Optimistic update
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, priority, importance } : t))
+    try {
+      await tasksApi.update(taskId, { priority, importance })
+    } catch {
+      loadData() // Rollback on error
+    }
+  }
 
   const handleSave = async (data: Partial<Task>) => {
     try {
@@ -61,7 +71,11 @@ export default function EisenhowerPage() {
           + Nueva tarea
         </button>
       </div>
-      <EisenhowerMatrix tasks={tasks} onTaskClick={(task) => { setSelectedTask(task); setShowDialog(true) }} />
+      <EisenhowerMatrix
+        tasks={tasks}
+        onTaskClick={(task) => { setSelectedTask(task); setShowDialog(true) }}
+        onTaskMove={handleTaskMove}
+      />
       {showDialog && (
         <TaskDialog
           task={selectedTask}
