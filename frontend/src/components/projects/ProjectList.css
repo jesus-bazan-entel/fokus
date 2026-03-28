@@ -1,0 +1,65 @@
+.projects-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.project-card {
+  overflow: hidden;
+}
+
+.project-color-bar {
+  height: 4px;
+}
+
+.project-card-body {
+  padding: 16px;
+}
+
+.project-card-body h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.project-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.project-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.color-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.color-swatch.active {
+  border-color: var(--color-text);
+}
+
+.empty-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: var(--color-text-secondary);
+}

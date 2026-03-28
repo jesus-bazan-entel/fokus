@@ -1,0 +1,124 @@
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  min-height: calc(100vh - 120px);
+}
+
+.kanban-column {
+  background: var(--color-bg);
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+  padding: 12px;
+  transition: border-color 0.15s;
+}
+
+.kanban-column.column-over {
+  border-color: var(--color-primary);
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  margin-bottom: 8px;
+}
+
+.column-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.column-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.column-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 100px;
+}
+
+.kanban-card {
+  padding: 12px;
+  cursor: grab;
+  transition: box-shadow 0.15s;
+}
+
+.kanban-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.kanban-card.dragging {
+  box-shadow: var(--shadow-lg);
+  cursor: grabbing;
+}
+
+.task-project-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+}
+
+.task-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.tag-urgent {
+  background: #fef2f2;
+  color: var(--color-danger);
+}
+
+.tag-important {
+  background: #fefce8;
+  color: #a16207;
+}
+
+.task-due {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-left: auto;
+}
+
+.add-task-btn {
+  width: 100%;
+  padding: 8px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+
+.add-task-btn:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: rgba(99, 102, 241, 0.03);
+}
