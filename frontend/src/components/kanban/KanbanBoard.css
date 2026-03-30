@@ -48,6 +48,7 @@
   padding: 12px;
   cursor: grab;
   transition: box-shadow 0.15s;
+  touch-action: none;
 }
 
 .kanban-card:hover {

@@ -75,6 +75,7 @@
 
 .quadrant-task {
   cursor: grab;
+  touch-action: none;
 }
 
 .quadrant-task:hover {

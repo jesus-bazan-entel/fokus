@@ -3,6 +3,7 @@ import {
   DragOverlay,
   closestCenter,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   useDraggable,
@@ -96,7 +97,8 @@ export default function EisenhowerMatrix({ tasks, onTaskClick, onTaskMove }: Pro
   const activeTasks = tasks.filter(t => t.status !== 'done')
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   )
 
   const getQuadrantTasks = (quadrantId: string) =>
