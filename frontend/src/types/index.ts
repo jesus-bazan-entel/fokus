@@ -45,6 +45,16 @@ export interface Task {
   assignee?: User
 }
 
+export interface TaskComment {
+  id: string
+  task_id: string
+  content: string
+  file_url?: string
+  file_name?: string
+  file_type?: string
+  created_at: string
+}
+
 export type EisenhowerQuadrant = 'do_first' | 'schedule' | 'delegate' | 'eliminate'
 
 export function getQuadrant(task: Task): EisenhowerQuadrant {

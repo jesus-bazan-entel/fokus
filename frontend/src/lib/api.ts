@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Task, TaskStatus, Project, Workspace } from '../types'
+import type { Task, TaskStatus, TaskComment, Project, Workspace } from '../types'
 
 // Projects
 export const projectsApi = {
@@ -137,5 +137,62 @@ export const tasksApi = {
       .single()
     if (error) throw new Error(error.message)
     return data
+  },
+}
+
+// Comments
+export const commentsApi = {
+  async list(taskId: string): Promise<TaskComment[]> {
+    const { data, error } = await supabase
+      .from('task_comments')
+      .select('*')
+      .eq('task_id', taskId)
+      .order('created_at', { ascending: true })
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  async create(taskId: string, content: string, file?: File): Promise<TaskComment> {
+    let fileUrl: string | undefined
+    let fileName: string | undefined
+    let fileType: string | undefined
+
+    if (file) {
+      const ext = file.name.split('.').pop()
+      const path = `${taskId}/${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('task-files')
+        .upload(path, file)
+      if (uploadError) throw new Error(uploadError.message)
+
+      const { data: urlData } = supabase.storage
+        .from('task-files')
+        .getPublicUrl(path)
+      fileUrl = urlData.publicUrl
+      fileName = file.name
+      fileType = file.type
+    }
+
+    const { data, error } = await supabase
+      .from('task_comments')
+      .insert({
+        task_id: taskId,
+        content,
+        file_url: fileUrl,
+        file_name: fileName,
+        file_type: fileType,
+      })
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return data
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('task_comments')
+      .delete()
+      .eq('id', id)
+    if (error) throw new Error(error.message)
   },
 }

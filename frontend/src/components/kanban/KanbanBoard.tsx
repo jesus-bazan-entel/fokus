@@ -102,14 +102,14 @@ export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask 
           const columnTasks = getColumnTasks(col.id)
           return (
             <Column key={col.id} id={col.id} title={col.title} color={col.color}>
+              <button className="add-task-btn" onClick={() => onAddTask(col.id)}>
+                + Agregar tarea
+              </button>
               <SortableContext items={columnTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
                 {columnTasks.map(task => (
                   <KanbanCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
                 ))}
               </SortableContext>
-              <button className="add-task-btn" onClick={() => onAddTask(col.id)}>
-                + Agregar tarea
-              </button>
             </Column>
           )
         })}
