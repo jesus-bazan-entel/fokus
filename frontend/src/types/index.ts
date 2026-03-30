@@ -113,9 +113,9 @@ export function computeProjectStatus(tasks: Task[]): ProjectStatus {
 
   if (!hasDueDates) return 'on_track'
 
-  // If all active tasks have no progress, consider on_hold
-  const inProgress = tasks.filter(t => t.status === 'in_progress').length
-  if (inProgress === 0 && total > 0 && tasks.filter(t => t.status === 'done').length === 0) {
+  // "On hold" only if ALL active tasks are in backlog (no todo, no in_progress)
+  const allBacklog = activeTasks.every(t => t.status === 'backlog')
+  if (allBacklog && total > 0) {
     return 'on_hold'
   }
 
