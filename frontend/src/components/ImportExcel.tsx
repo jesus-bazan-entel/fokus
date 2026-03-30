@@ -225,13 +225,28 @@ export default function ImportExcel({ onImportComplete }: Props) {
         }
       }
 
-      // 4. Create tasks
-      setProgress(`Creando ${rows.length} tarea(s)...`)
+      // 4. Load existing tasks to detect duplicates
+      setProgress('Verificando duplicados...')
+      const existingTasks = await tasksApi.list(workspace)
+      const existingSet = new Set(
+        existingTasks.map(t => `${t.title.toLowerCase().trim()}::${t.project_id}`)
+      )
+
+      // 5. Create tasks (skip duplicates)
       let created = 0
+      let skipped = 0
       let errors = 0
       for (const row of rows) {
         const project = projectMap.get(row.proyecto.toLowerCase())
         if (!project) continue
+
+        // Duplicate check: same title + same project
+        const key = `${row.tarea.toLowerCase().trim()}::${project.id}`
+        if (existingSet.has(key)) {
+          skipped++
+          setProgress(`Procesando... ${created + skipped + errors}/${rows.length} (${skipped} duplicadas)`)
+          continue
+        }
 
         const status = parseStatus(row.estado)
         const dueDate = row.eta || undefined
@@ -252,17 +267,18 @@ export default function ImportExcel({ onImportComplete }: Props) {
             due_date: dueDate || undefined,
           })
           created++
+          existingSet.add(key) // Prevent duplicates within same import
         } catch (taskErr) {
           console.error(`Error creando tarea "${row.tarea}":`, taskErr)
           errors++
         }
-        setProgress(`Creando tareas... ${created + errors}/${rows.length}`)
+        setProgress(`Procesando... ${created + skipped + errors}/${rows.length} (${skipped} duplicadas)`)
       }
 
-      const msg = errors > 0
-        ? `Listo! ${created} tarea(s) creadas, ${errors} con error.`
-        : `Listo! ${projectNames.length} proyecto(s) y ${created} tarea(s) creadas.`
-      setProgress(msg)
+      const parts = [`${created} creada(s)`]
+      if (skipped > 0) parts.push(`${skipped} duplicada(s) omitida(s)`)
+      if (errors > 0) parts.push(`${errors} con error`)
+      setProgress(`Listo! ${parts.join(', ')}.`)
       setTimeout(() => {
         setShowModal(false)
         setRows([])
