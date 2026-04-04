@@ -37,6 +37,80 @@
   font-weight: 600;
 }
 
+.column-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+
+/* Project grouping sections */
+.project-section {
+  margin-bottom: 4px;
+}
+
+.project-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.1s;
+  font-size: 12px;
+}
+
+.project-section-header:hover {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.project-section-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.project-section-name {
+  font-weight: 600;
+  color: var(--color-text);
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-section-count {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.project-section-toggle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.project-section-tasks {
+  padding: 4px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .column-content {
   display: flex;
   flex-direction: column;

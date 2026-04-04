@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -31,13 +31,21 @@ interface Props {
   onAddTask: (status: TaskStatus) => void
 }
 
-function Column({ id, title, color, children }: { id: string; title: string; color: string; children: React.ReactNode }) {
+interface ProjectGroup {
+  projectId: string
+  projectName: string
+  projectColor: string
+  tasks: Task[]
+}
+
+function Column({ id, title, color, count, children }: { id: string; title: string; color: string; count: number; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id })
   return (
     <div className={`kanban-column ${isOver ? 'column-over' : ''}`} ref={setNodeRef}>
       <div className="column-header">
         <span className="column-dot" style={{ background: color }} />
         <h3 className="column-title">{title}</h3>
+        <span className="column-count">{count}</span>
       </div>
       <div className="column-content">
         {children}
@@ -46,8 +54,29 @@ function Column({ id, title, color, children }: { id: string; title: string; col
   )
 }
 
+function ProjectSection({ group, collapsed, onToggle, children }: {
+  group: ProjectGroup; collapsed: boolean; onToggle: () => void; children: React.ReactNode
+}) {
+  return (
+    <div className="project-section">
+      <button className="project-section-header" onClick={onToggle}>
+        <span className="project-section-dot" style={{ background: group.projectColor }} />
+        <span className="project-section-name">{group.projectName}</span>
+        <span className="project-section-count">{group.tasks.length}</span>
+        <span className={`project-section-toggle ${collapsed ? '' : 'open'}`}>{collapsed ? '+' : '−'}</span>
+      </button>
+      {!collapsed && (
+        <div className="project-section-tasks">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask }: Props) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -57,14 +86,48 @@ export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask 
   const getColumnTasks = (status: TaskStatus) =>
     tasks.filter(t => t.status === status).sort((a, b) => a.position - b.position)
 
+  const getProjectGroups = (columnTasks: Task[]): ProjectGroup[] => {
+    const map = new Map<string, ProjectGroup>()
+    for (const task of columnTasks) {
+      const pid = task.project_id
+      if (!map.has(pid)) {
+        map.set(pid, {
+          projectId: pid,
+          projectName: task.project?.name || 'Sin proyecto',
+          projectColor: task.project?.color || '#94a3b8',
+          tasks: [],
+        })
+      }
+      map.get(pid)!.tasks.push(task)
+    }
+    return Array.from(map.values()).sort((a, b) => a.projectName.localeCompare(b.projectName))
+  }
+
+  // Check if grouping is useful (more than 1 project in any column with 5+ tasks)
+  const shouldGroup = useMemo(() => {
+    return COLUMNS.some(col => {
+      const colTasks = tasks.filter(t => t.status === col.id)
+      if (colTasks.length < 5) return false
+      const projects = new Set(colTasks.map(t => t.project_id))
+      return projects.size > 1
+    })
+  }, [tasks])
+
+  const toggleSection = (key: string) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
   const handleDragStart = (event: DragStartEvent) => {
     const task = tasks.find(t => t.id === event.active.id)
     if (task) setActiveTask(task)
   }
 
-  const handleDragOver = (_event: DragOverEvent) => {
-    // Visual feedback handled by useDroppable
-  }
+  const handleDragOver = (_event: DragOverEvent) => {}
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -74,7 +137,6 @@ export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask 
     const taskId = active.id as string
     const overId = over.id as string
 
-    // Check if dropped on a column
     const targetColumn = COLUMNS.find(c => c.id === overId)
     if (targetColumn) {
       const columnTasks = getColumnTasks(targetColumn.id)
@@ -82,7 +144,6 @@ export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask 
       return
     }
 
-    // Dropped on another task
     const overTask = tasks.find(t => t.id === overId)
     if (overTask) {
       onTaskMove(taskId, overTask.status, overTask.position)
@@ -100,15 +161,35 @@ export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask 
       <div className="kanban-board">
         {COLUMNS.map(col => {
           const columnTasks = getColumnTasks(col.id)
+          const groups = getProjectGroups(columnTasks)
+
           return (
-            <Column key={col.id} id={col.id} title={col.title} color={col.color}>
+            <Column key={col.id} id={col.id} title={col.title} color={col.color} count={columnTasks.length}>
               <button className="add-task-btn" onClick={() => onAddTask(col.id)}>
                 + Agregar tarea
               </button>
               <SortableContext items={columnTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                {columnTasks.map(task => (
-                  <KanbanCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
-                ))}
+                {shouldGroup ? (
+                  groups.map(group => {
+                    const sectionKey = `${col.id}-${group.projectId}`
+                    return (
+                      <ProjectSection
+                        key={sectionKey}
+                        group={group}
+                        collapsed={collapsedSections.has(sectionKey)}
+                        onToggle={() => toggleSection(sectionKey)}
+                      >
+                        {group.tasks.map(task => (
+                          <KanbanCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
+                        ))}
+                      </ProjectSection>
+                    )
+                  })
+                ) : (
+                  columnTasks.map(task => (
+                    <KanbanCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
+                  ))
+                )}
               </SortableContext>
             </Column>
           )
