@@ -310,16 +310,21 @@ export default function ImportExcel({ onImportComplete }: Props) {
 
   return (
     <>
-      <label className="btn btn-secondary import-btn">
-        Importar Excel
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".xlsx,.xls,.csv"
-          onChange={handleFile}
-          style={{ display: 'none' }}
-        />
-      </label>
+      <div className="import-actions">
+        <label className="btn btn-secondary import-btn">
+          Importar Excel
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={handleFile}
+            style={{ display: 'none' }}
+          />
+        </label>
+        <button className="template-link" onClick={downloadTemplate}>
+          Plantilla
+        </button>
+      </div>
 
       {showModal && (
         <div className="dialog-overlay" onClick={() => !importing && setShowModal(false)}>

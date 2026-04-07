@@ -1,3 +1,9 @@
+.import-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .import-btn {
   cursor: pointer;
 }
