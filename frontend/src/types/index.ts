@@ -37,6 +37,7 @@ export interface Task {
   importance: TaskImportance
   project_id: string
   assignee_id?: string
+  assignee_name?: string
   position: number
   due_date?: string
   created_at: string

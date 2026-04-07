@@ -33,6 +33,7 @@ export default function TaskDialog({ task, projects, defaultStatus, onSave, onDe
   const [priority, setPriority] = useState<TaskPriority>(task?.priority || 'not_urgent')
   const [importance, setImportance] = useState<TaskImportance>(task?.importance || 'not_important')
   const [projectId, setProjectId] = useState(task?.project_id || projects[0]?.id || '')
+  const [assigneeName, setAssigneeName] = useState(task?.assignee_name || '')
   const [dueDate, setDueDate] = useState(task?.due_date?.split('T')[0] || '')
 
   // Comments
@@ -75,6 +76,7 @@ export default function TaskDialog({ task, projects, defaultStatus, onSave, onDe
       priority,
       importance,
       project_id: projectId,
+      assignee_name: assigneeName || undefined,
       due_date: dueDate || undefined,
     })
   }
@@ -163,9 +165,15 @@ export default function TaskDialog({ task, projects, defaultStatus, onSave, onDe
                 </select>
               </div>
             </div>
-            <div className="form-group">
-              <label>Fecha limite</label>
-              <input className="input" type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Responsable</label>
+                <input className="input" value={assigneeName} onChange={e => setAssigneeName(e.target.value)} placeholder="Nombre del responsable" />
+              </div>
+              <div className="form-group">
+                <label>Fecha limite</label>
+                <input className="input" type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+              </div>
             </div>
             <div className="dialog-actions">
               {task && onDelete && (

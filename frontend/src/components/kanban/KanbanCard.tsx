@@ -45,6 +45,9 @@ export default function KanbanCard({ task, onClick, isDragging }: Props) {
       <div className="task-meta">
         {priorityLabel && <span className="tag tag-urgent">{priorityLabel}</span>}
         {importanceLabel && <span className="tag tag-important">{importanceLabel}</span>}
+        {task.assignee_name && (
+          <span className="task-assignee">{task.assignee_name}</span>
+        )}
         {task.due_date && (
           <span className="task-due">{new Date(task.due_date).toLocaleDateString('es')}</span>
         )}

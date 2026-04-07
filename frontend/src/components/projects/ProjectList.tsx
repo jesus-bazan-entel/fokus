@@ -87,6 +87,7 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
       'TAREA': t.title,
       'PROYECTO': project.name,
       'ESTADO': STATUS_LABELS[t.status] || t.status,
+      'RESPONSABLE': t.assignee_name || '',
       'PRIORIDAD': t.priority === 'urgent' ? 'Urgente' : 'No urgente',
       'IMPORTANCIA': t.importance === 'important' ? 'Importante' : 'No importante',
       'FECHA LIMITE': t.due_date ? new Date(t.due_date).toLocaleDateString('es-PE') : '',

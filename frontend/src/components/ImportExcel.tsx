@@ -251,10 +251,7 @@ export default function ImportExcel({ onImportComplete }: Props) {
         const status = parseStatus(row.estado)
         const dueDate = row.eta || undefined
 
-        const description = [
-          row.responsable ? `Responsable: ${row.responsable}` : '',
-          row.acciones || '',
-        ].filter(Boolean).join('\n')
+        const description = row.acciones || ''
 
         try {
           await tasksApi.create({
@@ -264,6 +261,7 @@ export default function ImportExcel({ onImportComplete }: Props) {
             priority: 'not_urgent',
             importance: 'important',
             project_id: project.id,
+            assignee_name: row.responsable || undefined,
             due_date: dueDate || undefined,
           })
           created++
