@@ -292,6 +292,22 @@ export default function ImportExcel({ onImportComplete }: Props) {
     }
   }
 
+  const downloadTemplate = () => {
+    const sampleRows = [
+      { TAREA: 'Disenar landing page', PROYECTO: 'Mi Proyecto', ESTADO: 'Por hacer', RESPONSABLE: 'Juan Perez', ETA: '15/04/2026', ACCIONES: 'Crear mockup en Figma' },
+      { TAREA: 'Configurar base de datos', PROYECTO: 'Mi Proyecto', ESTADO: 'En proceso', RESPONSABLE: 'Maria Lopez', ETA: '10/04/2026', ACCIONES: 'Definir schema PostgreSQL' },
+      { TAREA: 'Pruebas unitarias', PROYECTO: 'Mi Proyecto', ESTADO: 'Pendiente', RESPONSABLE: 'Carlos Ruiz', ETA: '20/04/2026', ACCIONES: 'Cubrir endpoints principales' },
+      { TAREA: 'Deploy a produccion', PROYECTO: 'Otro Proyecto', ESTADO: 'Pendiente', RESPONSABLE: 'Ana Torres', ETA: '25/04/2026', ACCIONES: 'Verificar variables de entorno' },
+      { TAREA: 'Revision de seguridad', PROYECTO: 'Otro Proyecto', ESTADO: 'Completado', RESPONSABLE: 'Pedro Diaz', ETA: '05/04/2026', ACCIONES: 'Audit OWASP top 10' },
+    ]
+
+    const ws = XLSX.utils.json_to_sheet(sampleRows)
+    ws['!cols'] = [{ wch: 30 }, { wch: 18 }, { wch: 14 }, { wch: 20 }, { wch: 12 }, { wch: 35 }]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Plantilla')
+    XLSX.writeFile(wb, 'fokus-plantilla-importacion.xlsx')
+  }
+
   return (
     <>
       <label className="btn btn-secondary import-btn">
@@ -315,6 +331,9 @@ export default function ImportExcel({ onImportComplete }: Props) {
 
             <div className="import-summary">
               <p><strong>{rows.length}</strong> tareas encontradas en <strong>{new Set(rows.map(r => r.proyecto)).size}</strong> proyecto(s)</p>
+              <button className="template-link" onClick={downloadTemplate}>
+                Descargar plantilla de ejemplo
+              </button>
             </div>
 
             <div className="import-preview">

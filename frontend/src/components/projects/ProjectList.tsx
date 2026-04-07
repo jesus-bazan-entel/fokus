@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as XLSX from 'xlsx'
 import type { Project, Task, ProjectStatus } from '../../types'
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from '../../types'
 import ImportExcel from '../ImportExcel'
@@ -76,6 +77,35 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
 
   const getProjectTasks = (projectId: string) => tasks.filter(t => t.project_id === projectId)
 
+  const STATUS_LABELS: Record<string, string> = {
+    backlog: 'Backlog', todo: 'Por hacer', in_progress: 'En progreso', done: 'Hecho',
+  }
+
+  const exportProjectToExcel = (project: Project) => {
+    const pTasks = getProjectTasks(project.id)
+    const rows = pTasks.map(t => ({
+      'TAREA': t.title,
+      'PROYECTO': project.name,
+      'ESTADO': STATUS_LABELS[t.status] || t.status,
+      'PRIORIDAD': t.priority === 'urgent' ? 'Urgente' : 'No urgente',
+      'IMPORTANCIA': t.importance === 'important' ? 'Importante' : 'No importante',
+      'FECHA LIMITE': t.due_date ? new Date(t.due_date).toLocaleDateString('es-PE') : '',
+      'DESCRIPCION': t.description || '',
+      'CREADO': new Date(t.created_at).toLocaleDateString('es-PE'),
+    }))
+
+    const ws = XLSX.utils.json_to_sheet(rows)
+    // Auto-width columns
+    const colWidths = Object.keys(rows[0] || {}).map(key => ({
+      wch: Math.max(key.length, ...rows.map(r => String((r as Record<string, string>)[key] || '').length).slice(0, 20)) + 2
+    }))
+    ws['!cols'] = colWidths
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, project.name.slice(0, 31))
+    XLSX.writeFile(wb, `${project.name.replace(/\s+/g, '-').toLowerCase()}-tareas.xlsx`)
+  }
+
   return (
     <div>
       <div className="projects-header">
@@ -142,6 +172,7 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
                 <ProgressBar tasks={pTasks} />
                 <div className="project-actions">
                   <button className="btn btn-gantt btn-sm" onClick={() => setGanttProject(p)}>Gantt</button>
+                  <button className="btn btn-export btn-sm" onClick={() => exportProjectToExcel(p)}>Exportar</button>
                   <button className="btn btn-secondary btn-sm" onClick={() => openEdit(p)}>Editar</button>
                   <button className="btn btn-danger btn-sm" onClick={() => onDelete(p.id)}>Eliminar</button>
                 </div>

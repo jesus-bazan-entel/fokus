@@ -13,6 +13,26 @@
   border-radius: var(--radius);
   margin-bottom: 16px;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.template-link {
+  background: none;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border: 1px dashed var(--color-primary);
+  border-radius: var(--radius);
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.template-link:hover {
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .import-preview {

@@ -104,6 +104,16 @@
   opacity: 0.9;
 }
 
+.btn-export {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+}
+
+.btn-export:hover {
+  opacity: 0.9;
+}
+
 .color-picker {
   display: flex;
   gap: 8px;
