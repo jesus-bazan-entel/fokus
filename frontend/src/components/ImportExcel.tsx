@@ -114,9 +114,10 @@ function normalizeHeader(h: string): string {
 
 interface Props {
   onImportComplete: () => void
+  defaultProjectName?: string
 }
 
-export default function ImportExcel({ onImportComplete }: Props) {
+export default function ImportExcel({ onImportComplete, defaultProjectName }: Props) {
   const { workspace } = useWorkspace()
   const [showModal, setShowModal] = useState(false)
   const [rows, setRows] = useState<ExcelRow[]>([])
@@ -183,7 +184,7 @@ export default function ImportExcel({ onImportComplete }: Props) {
 
           parsed.push({
             tarea,
-            proyecto: proyecto || 'Sin proyecto',
+            proyecto: defaultProjectName || proyecto || 'Sin proyecto',
             estado: mapped.estado || 'Pendiente',
             responsable: mapped.responsable || '',
             eta: parsedDate || '',

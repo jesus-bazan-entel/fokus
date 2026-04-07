@@ -28,11 +28,10 @@ function StatusBadge({ status }: { status: ProjectStatus }) {
 
 function ProgressBar({ tasks }: { tasks: Task[] }) {
   const total = tasks.length
-  if (total === 0) return null
   const done = tasks.filter(t => t.status === 'done').length
   const inProgress = tasks.filter(t => t.status === 'in_progress').length
-  const pctDone = (done / total) * 100
-  const pctInProgress = (inProgress / total) * 100
+  const pctDone = total > 0 ? (done / total) * 100 : 0
+  const pctInProgress = total > 0 ? (inProgress / total) * 100 : 0
 
   return (
     <div className="project-progress">
@@ -155,7 +154,7 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
                 <div className="import-section-divider">
                   <span>o importa tareas desde un archivo</span>
                 </div>
-                <ImportExcel onImportComplete={() => { setShowForm(false); onImportComplete() }} />
+                <ImportExcel onImportComplete={() => { setShowForm(false); onImportComplete() }} defaultProjectName={name || undefined} />
               </div>
             )}
           </div>
