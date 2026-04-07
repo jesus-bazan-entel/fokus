@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx-js-style'
 import { projectsApi, tasksApi } from '../lib/api'
 import type { TaskStatus } from '../types'
 import { useWorkspace } from '../context/WorkspaceContext'

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx-js-style'
 import type { Project, Task, ProjectStatus } from '../../types'
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from '../../types'
 import ImportExcel from '../ImportExcel'
@@ -88,21 +88,47 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
     const backlog = pTasks.filter(t => t.status === 'backlog').length
     const status = computeProjectStatus(pTasks)
     const statusLabel = PROJECT_STATUS_CONFIG[status].label
+    const statusColor = PROJECT_STATUS_CONFIG[status].color.replace('#', '')
     const today = new Date().toLocaleDateString('es-PE')
+    const pct = pTasks.length > 0 ? Math.round((done / pTasks.length) * 100) + '%' : '0%'
 
-    // Build worksheet data with header section
+    // Styles
+    const border = {
+      top: { style: 'thin' as const, color: { rgb: 'D1D5DB' } },
+      bottom: { style: 'thin' as const, color: { rgb: 'D1D5DB' } },
+      left: { style: 'thin' as const, color: { rgb: 'D1D5DB' } },
+      right: { style: 'thin' as const, color: { rgb: 'D1D5DB' } },
+    }
+    const titleS = { font: { bold: true, sz: 18, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '4338CA' } }, alignment: { horizontal: 'center' as const, vertical: 'center' as const } }
+    const subtitleS = { font: { bold: true, sz: 11, color: { rgb: '6366F1' } }, fill: { fgColor: { rgb: 'EEF2FF' } }, alignment: { horizontal: 'center' as const } }
+    const labelS = { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '6366F1' } }, alignment: { horizontal: 'right' as const }, border }
+    const valueS = { font: { sz: 10, color: { rgb: '1F2937' } }, fill: { fgColor: { rgb: 'F9FAFB' } }, border }
+    const headerS = { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1E293B' } }, alignment: { horizontal: 'center' as const }, border }
+
+    const statusBgColors: Record<string, string> = {
+      'Hecho': 'D1FAE5', 'En progreso': 'FEF3C7', 'Por hacer': 'DBEAFE', 'Backlog': 'F1F5F9',
+    }
+    const statusFontColors: Record<string, string> = {
+      'Hecho': '065F46', 'En progreso': '92400E', 'Por hacer': '1E40AF', 'Backlog': '475569',
+    }
+
+    // Row 1: Title bar
+    // Row 2: Subtitle
+    // Row 3-6: Project info
+    // Row 7: spacer
+    // Row 8: Column headers
+    // Row 9+: Data
     const wsData: (string | number)[][] = [
-      ['REPORTE DE PROYECTO'],
-      [],
-      ['Proyecto:', project.name, '', 'Estado:', statusLabel],
-      ['Descripcion:', project.description || '-', '', 'Fecha reporte:', today],
-      ['Total tareas:', pTasks.length, '', 'Completadas:', done],
-      ['En progreso:', inProg, '', 'Por hacer:', todo + backlog],
-      [],
+      ['', '', '', 'REPORTE DE PROYECTO', '', '', '', ''],
+      ['', '', '', project.name, '', '', '', ''],
+      ['', 'Proyecto', project.name, '', 'Estado', statusLabel, '', ''],
+      ['', 'Descripcion', project.description || '-', '', 'Fecha', today, '', ''],
+      ['', 'Total tareas', String(pTasks.length), '', 'Completadas', String(done), '', ''],
+      ['', 'En progreso', String(inProg), '', 'Pendientes', String(todo + backlog), '', ''],
+      ['', '', '', '', 'Avance', pct, '', ''],
       ['#', 'TAREA', 'ESTADO', 'RESPONSABLE', 'PRIORIDAD', 'IMPORTANCIA', 'FECHA LIMITE', 'DESCRIPCION'],
     ]
 
-    // Data rows
     pTasks.forEach((t, i) => {
       wsData.push([
         i + 1,
@@ -117,89 +143,124 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
     })
 
     const ws = XLSX.utils.aoa_to_sheet(wsData)
-
-    // Column widths
     ws['!cols'] = [
-      { wch: 4 }, { wch: 40 }, { wch: 14 }, { wch: 22 },
-      { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 40 },
+      { wch: 5 }, { wch: 42 }, { wch: 15 }, { wch: 22 },
+      { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 42 },
     ]
-
-    // Merge title row
+    ws['!rows'] = [{ hpt: 32 }, { hpt: 22 }]
     ws['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },  // Title
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },  // Subtitle
     ]
 
-    // Cell styles (xlsx community edition supports basic styling)
-    const headerRow = 7 // 0-indexed row for column headers
-    const headerStyle = {
-      font: { bold: true, color: { rgb: 'FFFFFF' } },
-      fill: { fgColor: { rgb: '4F46E5' } },
-      alignment: { horizontal: 'center' },
-      border: {
-        top: { style: 'thin', color: { rgb: '000000' } },
-        bottom: { style: 'thin', color: { rgb: '000000' } },
-        left: { style: 'thin', color: { rgb: '000000' } },
-        right: { style: 'thin', color: { rgb: '000000' } },
-      },
-    }
+    const cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 
-    const titleStyle = {
-      font: { bold: true, sz: 16, color: { rgb: '4F46E5' } },
-      alignment: { horizontal: 'center' },
-    }
+    // Title bar (row 1) - dark indigo
+    cols.forEach(c => {
+      const ref = `${c}1`
+      if (!ws[ref]) ws[ref] = { v: '', t: 's' }
+      ws[ref].s = titleS
+    })
+    // Make D1 the merged title
+    if (ws['A1']) ws['A1'].s = titleS
 
-    const labelStyle = {
-      font: { bold: true, color: { rgb: '374151' } },
-      fill: { fgColor: { rgb: 'F3F4F6' } },
-    }
-
-    // Apply title style
-    if (ws['A1']) ws['A1'].s = titleStyle
-
-    // Apply header row styles
-    const headerCols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-    headerCols.forEach(col => {
-      const cell = ws[`${col}${headerRow + 1}`]
-      if (cell) cell.s = headerStyle
+    // Subtitle (row 2) - light indigo
+    cols.forEach(c => {
+      const ref = `${c}2`
+      if (!ws[ref]) ws[ref] = { v: '', t: 's' }
+      ws[ref].s = subtitleS
     })
 
-    // Apply label styles for project info
-    const labelCells = ['A3', 'A4', 'A5', 'A6', 'D3', 'D4', 'D5', 'D6']
-    labelCells.forEach(ref => {
-      if (ws[ref]) ws[ref].s = labelStyle
-    })
-
-    // Apply status-based coloring to data rows
-    const statusColors: Record<string, string> = {
-      'Hecho': 'DCFCE7',
-      'En progreso': 'FEF9C3',
-      'Por hacer': 'DBEAFE',
-      'Backlog': 'F1F5F9',
+    // Project info section (rows 3-7)
+    for (let r = 2; r <= 6; r++) {
+      const rowNum = r + 1
+      // Labels: B and E
+      const bRef = `B${rowNum}`
+      const eRef = `E${rowNum}`
+      if (ws[bRef]) ws[bRef].s = labelS
+      if (ws[eRef]) ws[eRef].s = labelS
+      // Values: C and F
+      const cRef = `C${rowNum}`
+      const fRef = `F${rowNum}`
+      if (ws[cRef]) ws[cRef].s = valueS
+      if (ws[fRef]) ws[fRef].s = valueS
+      // Empty cols get light bg
+      const aRef = `A${rowNum}`
+      const dRef = `D${rowNum}`
+      const gRef = `G${rowNum}`
+      const hRef = `H${rowNum}`
+      ;[aRef, dRef, gRef, hRef].forEach(ref => {
+        if (!ws[ref]) ws[ref] = { v: '', t: 's' }
+        ws[ref].s = { fill: { fgColor: { rgb: 'F9FAFB' } } }
+      })
     }
 
+    // Status value with color
+    const statusCell = ws['F3']
+    if (statusCell) {
+      statusCell.s = { ...valueS, font: { bold: true, sz: 11, color: { rgb: statusColor } } }
+    }
+
+    // Column headers (row 8)
+    cols.forEach(c => {
+      const ref = `${c}8`
+      if (ws[ref]) ws[ref].s = headerS
+    })
+
+    // Data rows (row 9+)
     pTasks.forEach((t, i) => {
-      const rowNum = headerRow + 2 + i
+      const rowNum = 9 + i
       const statusText = STATUS_LABELS[t.status] || t.status
-      const bgColor = statusColors[statusText] || 'FFFFFF'
-      headerCols.forEach(col => {
-        const cell = ws[`${col}${rowNum}`]
-        if (cell) {
-          cell.s = {
-            fill: { fgColor: { rgb: bgColor } },
-            border: {
-              top: { style: 'thin', color: { rgb: 'E5E7EB' } },
-              bottom: { style: 'thin', color: { rgb: 'E5E7EB' } },
-              left: { style: 'thin', color: { rgb: 'E5E7EB' } },
-              right: { style: 'thin', color: { rgb: 'E5E7EB' } },
-            },
-            alignment: col === 'A' ? { horizontal: 'center' } : undefined,
-          }
+      const bgColor = statusBgColors[statusText] || 'FFFFFF'
+      const fontColor = statusFontColors[statusText] || '1F2937'
+      const isEven = i % 2 === 0
+
+      cols.forEach(c => {
+        const ref = `${c}${rowNum}`
+        if (!ws[ref]) ws[ref] = { v: '', t: 's' }
+        ws[ref].s = {
+          font: { sz: 10, color: { rgb: '374151' } },
+          fill: { fgColor: { rgb: isEven ? 'FFFFFF' : 'F9FAFB' } },
+          border,
+          alignment: c === 'A' ? { horizontal: 'center' as const } : { wrapText: true },
         }
       })
-      // Bold urgent tasks
+
+      // Status cell with colored badge-style
+      const statusRef = `C${rowNum}`
+      if (ws[statusRef]) {
+        ws[statusRef].s = {
+          font: { bold: true, sz: 10, color: { rgb: fontColor } },
+          fill: { fgColor: { rgb: bgColor } },
+          border,
+          alignment: { horizontal: 'center' as const },
+        }
+      }
+
+      // Urgente in red bold
       if (t.priority === 'urgent') {
-        const cellE = ws[`E${rowNum}`]
-        if (cellE) cellE.s = { ...cellE.s, font: { bold: true, color: { rgb: 'DC2626' } } }
+        const ref = `E${rowNum}`
+        if (ws[ref]) {
+          ws[ref].s = {
+            font: { bold: true, sz: 10, color: { rgb: 'DC2626' } },
+            fill: { fgColor: { rgb: 'FEF2F2' } },
+            border,
+            alignment: { horizontal: 'center' as const },
+          }
+        }
+      }
+
+      // Importante in amber
+      if (t.importance === 'important') {
+        const ref = `F${rowNum}`
+        if (ws[ref]) {
+          ws[ref].s = {
+            font: { bold: true, sz: 10, color: { rgb: 'A16207' } },
+            fill: { fgColor: { rgb: isEven ? 'FFFFFF' : 'F9FAFB' } },
+            border,
+            alignment: { horizontal: 'center' as const },
+          }
+        }
       }
     })
 
