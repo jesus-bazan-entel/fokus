@@ -104,11 +104,8 @@ export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask 
   }
 
   // Check if grouping is useful (more than 1 project in any column with 5+ tasks)
-  // Group by project if there are 2+ projects across all tasks
-  const shouldGroup = useMemo(() => {
-    const allProjects = new Set(tasks.map(t => t.project_id))
-    return allProjects.size > 1
-  }, [tasks])
+  // Always group by project
+  const shouldGroup = useMemo(() => tasks.length > 0, [tasks])
 
   const toggleSection = (key: string) => {
     setCollapsedSections(prev => {
