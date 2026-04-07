@@ -131,6 +131,38 @@
   border-color: var(--color-text);
 }
 
+.import-section {
+  padding: 0 0 4px;
+}
+
+.import-section-divider {
+  text-align: center;
+  margin: 16px 0;
+  position: relative;
+}
+
+.import-section-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.import-section-divider span {
+  position: relative;
+  background: var(--color-surface);
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.import-section .import-actions {
+  justify-content: center;
+}
+
 .empty-message {
   grid-column: 1 / -1;
   text-align: center;

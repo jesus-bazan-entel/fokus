@@ -111,10 +111,7 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
     <div>
       <div className="projects-header">
         <h2>Proyectos</h2>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <ImportExcel onImportComplete={onImportComplete} />
-          <button className="btn btn-primary" onClick={openNew}>+ Nuevo proyecto</button>
-        </div>
+        <button className="btn btn-primary" onClick={openNew}>+ Nuevo proyecto</button>
       </div>
 
       {showForm && (
@@ -153,6 +150,14 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
                 <button type="submit" className="btn btn-primary">{editing ? 'Guardar' : 'Crear'}</button>
               </div>
             </form>
+            {!editing && (
+              <div className="import-section">
+                <div className="import-section-divider">
+                  <span>o importa tareas desde un archivo</span>
+                </div>
+                <ImportExcel onImportComplete={() => { setShowForm(false); onImportComplete() }} />
+              </div>
+            )}
           </div>
         </div>
       )}
