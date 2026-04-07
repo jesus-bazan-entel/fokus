@@ -82,28 +82,130 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
 
   const exportProjectToExcel = (project: Project) => {
     const pTasks = getProjectTasks(project.id)
-    const rows = pTasks.map(t => ({
-      'TAREA': t.title,
-      'PROYECTO': project.name,
-      'ESTADO': STATUS_LABELS[t.status] || t.status,
-      'RESPONSABLE': t.assignee_name || '',
-      'PRIORIDAD': t.priority === 'urgent' ? 'Urgente' : 'No urgente',
-      'IMPORTANCIA': t.importance === 'important' ? 'Importante' : 'No importante',
-      'FECHA LIMITE': t.due_date ? new Date(t.due_date).toLocaleDateString('es-PE') : '',
-      'DESCRIPCION': t.description || '',
-      'CREADO': new Date(t.created_at).toLocaleDateString('es-PE'),
-    }))
+    const done = pTasks.filter(t => t.status === 'done').length
+    const inProg = pTasks.filter(t => t.status === 'in_progress').length
+    const todo = pTasks.filter(t => t.status === 'todo').length
+    const backlog = pTasks.filter(t => t.status === 'backlog').length
+    const status = computeProjectStatus(pTasks)
+    const statusLabel = PROJECT_STATUS_CONFIG[status].label
+    const today = new Date().toLocaleDateString('es-PE')
 
-    const ws = XLSX.utils.json_to_sheet(rows)
-    // Auto-width columns
-    const colWidths = Object.keys(rows[0] || {}).map(key => ({
-      wch: Math.max(key.length, ...rows.map(r => String((r as Record<string, string>)[key] || '').length).slice(0, 20)) + 2
-    }))
-    ws['!cols'] = colWidths
+    // Build worksheet data with header section
+    const wsData: (string | number)[][] = [
+      ['REPORTE DE PROYECTO'],
+      [],
+      ['Proyecto:', project.name, '', 'Estado:', statusLabel],
+      ['Descripcion:', project.description || '-', '', 'Fecha reporte:', today],
+      ['Total tareas:', pTasks.length, '', 'Completadas:', done],
+      ['En progreso:', inProg, '', 'Por hacer:', todo + backlog],
+      [],
+      ['#', 'TAREA', 'ESTADO', 'RESPONSABLE', 'PRIORIDAD', 'IMPORTANCIA', 'FECHA LIMITE', 'DESCRIPCION'],
+    ]
+
+    // Data rows
+    pTasks.forEach((t, i) => {
+      wsData.push([
+        i + 1,
+        t.title,
+        STATUS_LABELS[t.status] || t.status,
+        t.assignee_name || '',
+        t.priority === 'urgent' ? 'Urgente' : 'No urgente',
+        t.importance === 'important' ? 'Importante' : 'No importante',
+        t.due_date ? new Date(t.due_date).toLocaleDateString('es-PE') : '',
+        t.description || '',
+      ])
+    })
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData)
+
+    // Column widths
+    ws['!cols'] = [
+      { wch: 4 }, { wch: 40 }, { wch: 14 }, { wch: 22 },
+      { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 40 },
+    ]
+
+    // Merge title row
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+    ]
+
+    // Cell styles (xlsx community edition supports basic styling)
+    const headerRow = 7 // 0-indexed row for column headers
+    const headerStyle = {
+      font: { bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '4F46E5' } },
+      alignment: { horizontal: 'center' },
+      border: {
+        top: { style: 'thin', color: { rgb: '000000' } },
+        bottom: { style: 'thin', color: { rgb: '000000' } },
+        left: { style: 'thin', color: { rgb: '000000' } },
+        right: { style: 'thin', color: { rgb: '000000' } },
+      },
+    }
+
+    const titleStyle = {
+      font: { bold: true, sz: 16, color: { rgb: '4F46E5' } },
+      alignment: { horizontal: 'center' },
+    }
+
+    const labelStyle = {
+      font: { bold: true, color: { rgb: '374151' } },
+      fill: { fgColor: { rgb: 'F3F4F6' } },
+    }
+
+    // Apply title style
+    if (ws['A1']) ws['A1'].s = titleStyle
+
+    // Apply header row styles
+    const headerCols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    headerCols.forEach(col => {
+      const cell = ws[`${col}${headerRow + 1}`]
+      if (cell) cell.s = headerStyle
+    })
+
+    // Apply label styles for project info
+    const labelCells = ['A3', 'A4', 'A5', 'A6', 'D3', 'D4', 'D5', 'D6']
+    labelCells.forEach(ref => {
+      if (ws[ref]) ws[ref].s = labelStyle
+    })
+
+    // Apply status-based coloring to data rows
+    const statusColors: Record<string, string> = {
+      'Hecho': 'DCFCE7',
+      'En progreso': 'FEF9C3',
+      'Por hacer': 'DBEAFE',
+      'Backlog': 'F1F5F9',
+    }
+
+    pTasks.forEach((t, i) => {
+      const rowNum = headerRow + 2 + i
+      const statusText = STATUS_LABELS[t.status] || t.status
+      const bgColor = statusColors[statusText] || 'FFFFFF'
+      headerCols.forEach(col => {
+        const cell = ws[`${col}${rowNum}`]
+        if (cell) {
+          cell.s = {
+            fill: { fgColor: { rgb: bgColor } },
+            border: {
+              top: { style: 'thin', color: { rgb: 'E5E7EB' } },
+              bottom: { style: 'thin', color: { rgb: 'E5E7EB' } },
+              left: { style: 'thin', color: { rgb: 'E5E7EB' } },
+              right: { style: 'thin', color: { rgb: 'E5E7EB' } },
+            },
+            alignment: col === 'A' ? { horizontal: 'center' } : undefined,
+          }
+        }
+      })
+      // Bold urgent tasks
+      if (t.priority === 'urgent') {
+        const cellE = ws[`E${rowNum}`]
+        if (cellE) cellE.s = { ...cellE.s, font: { bold: true, color: { rgb: 'DC2626' } } }
+      }
+    })
 
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, project.name.slice(0, 31))
-    XLSX.writeFile(wb, `${project.name.replace(/\s+/g, '-').toLowerCase()}-tareas.xlsx`)
+    XLSX.writeFile(wb, `${project.name.replace(/\s+/g, '-').toLowerCase()}-reporte.xlsx`)
   }
 
   return (
