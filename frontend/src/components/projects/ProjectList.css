@@ -94,6 +94,16 @@
   gap: 8px;
 }
 
+.btn-table {
+  background: #1e293b;
+  color: white;
+  border: none;
+}
+
+.btn-table:hover {
+  background: #334155;
+}
+
 .btn-gantt {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;

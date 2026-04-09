@@ -1,0 +1,201 @@
+.table-dialog {
+  max-width: 1100px;
+  width: 95vw;
+  max-height: 90vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.table-dialog .dialog-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.table-task-count {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+  padding: 2px 10px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+
+.table-container {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Table */
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 900px;
+}
+
+.task-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.task-table th {
+  background: #1e293b;
+  color: white;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 10px 12px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 2px solid #0f172a;
+}
+
+.th-num { width: 36px; text-align: center; }
+.th-title { min-width: 200px; }
+.th-status { width: 110px; }
+.th-assignee { width: 140px; }
+.th-priority { width: 100px; }
+.th-importance { width: 110px; }
+.th-date { width: 110px; }
+.th-desc { min-width: 180px; }
+.th-actions { width: 36px; }
+
+/* Rows */
+.task-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.row-alt {
+  background: #f8fafc;
+}
+
+.task-table tbody tr:hover {
+  background: #eff6ff !important;
+}
+
+.row-saving {
+  opacity: 0.6;
+}
+
+.td-num {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* Clickable cells */
+.cell-clickable {
+  display: block;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  min-height: 24px;
+  transition: background 0.1s;
+}
+
+.cell-clickable:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+/* Editing inputs */
+.cell-input {
+  width: 100%;
+  padding: 4px 6px;
+  border: 2px solid var(--color-primary);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+  background: white;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.cell-select {
+  width: 100%;
+  padding: 4px 4px;
+  border: 2px solid var(--color-primary);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  background: white;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  cursor: pointer;
+}
+
+/* Badges */
+.cell-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.1s;
+  white-space: nowrap;
+}
+
+.cell-badge:hover {
+  opacity: 0.8;
+}
+
+.badge-urgent {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.badge-important {
+  background: #fefce8;
+  color: #a16207;
+}
+
+.badge-normal {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* Delete */
+.row-delete-btn {
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  padding: 2px 6px;
+  line-height: 1;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.1s;
+}
+
+.task-table tbody tr:hover .row-delete-btn {
+  opacity: 1;
+}
+
+.row-delete-btn:hover {
+  background: #fef2f2;
+  color: var(--color-danger);
+}
+
+/* Empty & footer */
+.table-empty {
+  text-align: center;
+  padding: 40px !important;
+  color: var(--color-text-secondary);
+}
+
+.table-footer {
+  padding: 10px 20px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
