@@ -339,11 +339,11 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
                 <p className="project-desc">{p.description}</p>
                 <ProgressBar tasks={pTasks} />
                 <div className="project-actions">
-                  <button className="btn btn-table btn-sm" onClick={() => setTableProject(p)}>Tabla</button>
-                  <button className="btn btn-gantt btn-sm" onClick={() => setGanttProject(p)}>Gantt</button>
-                  <button className="btn btn-export btn-sm" onClick={() => exportProjectToExcel(p)}>Exportar</button>
-                  <button className="btn btn-secondary btn-sm" onClick={() => openEdit(p)}>Editar</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => onDelete(p.id)}>Eliminar</button>
+                  <button className="icon-btn btn-table" onClick={() => setTableProject(p)} title="Ver tabla de tareas">&#9638;</button>
+                  <button className="icon-btn btn-gantt" onClick={() => setGanttProject(p)} title="Diagrama Gantt">&#9604;</button>
+                  <button className="icon-btn btn-export" onClick={() => exportProjectToExcel(p)} title="Exportar Excel">&#8681;</button>
+                  <button className="icon-btn btn-edit" onClick={() => openEdit(p)} title="Editar proyecto">&#9998;</button>
+                  <button className="icon-btn btn-delete" onClick={() => onDelete(p.id)} title="Eliminar proyecto">&#10005;</button>
                 </div>
               </div>
             </div>
