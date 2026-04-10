@@ -11,7 +11,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { Task, TaskPriority, TaskImportance } from '../../types'
 import { getQuadrant } from '../../types'
 import './EisenhowerMatrix.css'
@@ -92,9 +92,52 @@ function OverlayCard({ task }: { task: Task }) {
   )
 }
 
+interface ProjectGroup {
+  projectId: string
+  projectName: string
+  projectColor: string
+  tasks: Task[]
+}
+
+function groupByProject(tasks: Task[]): ProjectGroup[] {
+  const map = new Map<string, ProjectGroup>()
+  for (const task of tasks) {
+    const pid = task.project_id
+    if (!map.has(pid)) {
+      map.set(pid, {
+        projectId: pid,
+        projectName: task.project?.name || 'Sin proyecto',
+        projectColor: task.project?.color || '#94a3b8',
+        tasks: [],
+      })
+    }
+    map.get(pid)!.tasks.push(task)
+  }
+  return Array.from(map.values()).sort((a, b) => a.projectName.localeCompare(b.projectName))
+}
+
+function ProjectSection({ group, collapsed, onToggle, children }: {
+  group: ProjectGroup; collapsed: boolean; onToggle: () => void; children: React.ReactNode
+}) {
+  return (
+    <div className="eq-project-section">
+      <button className="eq-project-header" onClick={onToggle}>
+        <span className="eq-project-dot" style={{ background: group.projectColor }} />
+        <span className="eq-project-name">{group.projectName}</span>
+        <span className="eq-project-count">{group.tasks.length}</span>
+        <span className="eq-project-toggle">{collapsed ? '+' : '−'}</span>
+      </button>
+      {!collapsed && <div className="eq-project-tasks">{children}</div>}
+    </div>
+  )
+}
+
 export default function EisenhowerMatrix({ tasks, onTaskClick, onTaskMove }: Props) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
   const activeTasks = tasks.filter(t => t.status !== 'done')
+
+  const shouldGroup = useMemo(() => activeTasks.length > 0, [activeTasks])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -103,6 +146,15 @@ export default function EisenhowerMatrix({ tasks, onTaskClick, onTaskMove }: Pro
 
   const getQuadrantTasks = (quadrantId: string) =>
     activeTasks.filter(t => getQuadrant(t) === quadrantId)
+
+  const toggleSection = (key: string) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = activeTasks.find(t => t.id === event.active.id)
@@ -138,11 +190,30 @@ export default function EisenhowerMatrix({ tasks, onTaskClick, onTaskMove }: Pro
         <div className="axis-label axis-x-right">No urgente</div>
         {QUADRANTS.map(q => {
           const qTasks = getQuadrantTasks(q.id)
+          const groups = groupByProject(qTasks)
           return (
             <DroppableQuadrant key={q.id} id={q.id} title={q.title} subtitle={q.subtitle} color={q.color} bg={q.bg} count={qTasks.length}>
-              {qTasks.map(task => (
-                <DraggableTaskCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
-              ))}
+              {shouldGroup && qTasks.length > 0 ? (
+                groups.map(group => {
+                  const sectionKey = `${q.id}-${group.projectId}`
+                  return (
+                    <ProjectSection
+                      key={sectionKey}
+                      group={group}
+                      collapsed={collapsedSections.has(sectionKey)}
+                      onToggle={() => toggleSection(sectionKey)}
+                    >
+                      {group.tasks.map(task => (
+                        <DraggableTaskCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
+                      ))}
+                    </ProjectSection>
+                  )
+                })
+              ) : (
+                qTasks.map(task => (
+                  <DraggableTaskCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
+                ))
+              )}
               {qTasks.length === 0 && !activeTask && (
                 <p className="quadrant-empty">Sin tareas</p>
               )}

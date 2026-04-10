@@ -90,6 +90,70 @@
   border-color: var(--color-primary);
 }
 
+/* Project grouping inside quadrants */
+.eq-project-section {
+  margin-bottom: 6px;
+}
+
+.eq-project-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.1s;
+}
+
+.eq-project-header:hover {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.eq-project-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.eq-project-name {
+  font-weight: 600;
+  color: var(--color-text);
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eq-project-count {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.eq-project-toggle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  width: 16px;
+  text-align: center;
+}
+
+.eq-project-tasks {
+  padding: 4px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .drop-hint {
   color: var(--color-primary) !important;
   font-weight: 500;
