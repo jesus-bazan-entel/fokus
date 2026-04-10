@@ -314,14 +314,12 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
                 <button type="submit" className="btn btn-primary">{editing ? 'Guardar' : 'Crear'}</button>
               </div>
             </form>
-            {!editing && (
-              <div className="import-section">
-                <div className="import-section-divider">
-                  <span>o importa tareas desde un archivo</span>
-                </div>
-                <ImportExcel onImportComplete={() => { setShowForm(false); onImportComplete() }} defaultProjectName={name || undefined} />
+            <div className="import-section">
+              <div className="import-section-divider">
+                <span>{editing ? 'Importar mas tareas' : 'o importa tareas desde un archivo'}</span>
               </div>
-            )}
+              <ImportExcel onImportComplete={() => { setShowForm(false); onImportComplete() }} defaultProjectName={name || undefined} />
+            </div>
           </div>
         </div>
       )}
