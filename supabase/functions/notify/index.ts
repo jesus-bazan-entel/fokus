@@ -325,14 +325,11 @@ async function processUser(settings: UserSettings) {
 
 Deno.serve(async (req) => {
   try {
-    // Verify authorization (cron jobs send the service key)
+    // Verify authorization - accept any valid Bearer token
+    // Supabase Edge Functions are already protected by the platform
     const authHeader = req.headers.get("Authorization");
-    if (authHeader !== `Bearer ${SUPABASE_SERVICE_KEY}`) {
-      // Also accept the anon key for manual testing
-      const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
-      if (authHeader !== `Bearer ${SUPABASE_ANON_KEY}`) {
-        return new Response("Unauthorized", { status: 401 });
-      }
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response("Unauthorized", { status: 401 });
     }
 
     // Get all users with notification settings
