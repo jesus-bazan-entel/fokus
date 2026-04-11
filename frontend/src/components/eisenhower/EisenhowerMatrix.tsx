@@ -134,7 +134,7 @@ function ProjectSection({ group, collapsed, onToggle, children }: {
 
 export default function EisenhowerMatrix({ tasks, onTaskClick, onTaskMove }: Props) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
   const activeTasks = tasks.filter(t => t.status !== 'done')
 
   const shouldGroup = useMemo(() => activeTasks.length > 0, [activeTasks])
@@ -148,7 +148,7 @@ export default function EisenhowerMatrix({ tasks, onTaskClick, onTaskMove }: Pro
     activeTasks.filter(t => getQuadrant(t) === quadrantId)
 
   const toggleSection = (key: string) => {
-    setCollapsedSections(prev => {
+    setExpandedSections(prev => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
@@ -200,7 +200,7 @@ export default function EisenhowerMatrix({ tasks, onTaskClick, onTaskMove }: Pro
                     <ProjectSection
                       key={sectionKey}
                       group={group}
-                      collapsed={collapsedSections.has(sectionKey)}
+                      collapsed={!expandedSections.has(sectionKey)}
                       onToggle={() => toggleSection(sectionKey)}
                     >
                       {group.tasks.map(task => (

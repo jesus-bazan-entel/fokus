@@ -76,7 +76,7 @@ function ProjectSection({ group, collapsed, onToggle, children }: {
 
 export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask }: Props) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -108,7 +108,7 @@ export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask 
   const shouldGroup = useMemo(() => tasks.length > 0, [tasks])
 
   const toggleSection = (key: string) => {
-    setCollapsedSections(prev => {
+    setExpandedSections(prev => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
@@ -170,7 +170,7 @@ export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask 
                       <ProjectSection
                         key={sectionKey}
                         group={group}
-                        collapsed={collapsedSections.has(sectionKey)}
+                        collapsed={!expandedSections.has(sectionKey)}
                         onToggle={() => toggleSection(sectionKey)}
                       >
                         {group.tasks.map(task => (
