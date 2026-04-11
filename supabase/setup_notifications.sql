@@ -1,0 +1,42 @@
+-- =============================================
+-- Setup: Scheduled Notifications via pg_cron
+-- Run this in Supabase SQL Editor
+-- =============================================
+
+-- 1. Enable pg_cron and pg_net extensions
+-- (Go to Supabase Dashboard > Database > Extensions and enable:
+--  - pg_cron
+--  - pg_net
+-- Or run these if you have permissions:)
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+-- 2. Create the cron job that calls the Edge Function every day at 8:00 AM UTC
+-- Adjust the schedule as needed (cron format: minute hour day month weekday)
+select cron.schedule(
+  'fokus-daily-notifications',    -- job name
+  '0 8 * * 1-5',                  -- 8:00 AM UTC, Monday to Friday
+  $$
+  select net.http_post(
+    url := current_setting('app.settings.supabase_url') || '/functions/v1/notify',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key'),
+      'Content-Type', 'application/json'
+    ),
+    body := '{}'::jsonb
+  );
+  $$
+);
+
+-- To verify the cron job was created:
+-- select * from cron.job;
+
+-- To remove the cron job:
+-- select cron.unschedule('fokus-daily-notifications');
+
+-- To test manually (call the Edge Function right now):
+-- select net.http_post(
+--   url := 'https://xhpnogywfaufrvoqvnee.supabase.co/functions/v1/notify',
+--   headers := '{"Authorization": "Bearer YOUR_SERVICE_ROLE_KEY", "Content-Type": "application/json"}'::jsonb,
+--   body := '{}'::jsonb
+-- );
