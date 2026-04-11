@@ -19,6 +19,9 @@ export interface Project {
   description: string
   color: string
   workspace: Workspace
+  notify_time?: string
+  notify_days?: string[]
+  notify_enabled?: boolean
   owner_id: string
   created_at: string
   updated_at: string

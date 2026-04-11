@@ -172,16 +172,47 @@ async function processUser(settings: UserSettings) {
   const userName = userData.user.user_metadata?.full_name || userData.user.email?.split("@")[0] || "Usuario";
   const userEmail = userData.user.email;
 
-  // Get user's projects
+  // Get user's projects with notification settings
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, name")
+    .select("id, name, notify_enabled, notify_time, notify_days")
     .eq("owner_id", settings.user_id);
 
   if (!projects || projects.length === 0) return;
 
-  const projectIds = projects.map((p: { id: string }) => p.id);
-  const projectMap = new Map(projects.map((p: { id: string; name: string }) => [p.id, p.name]));
+  // Filter projects that should be notified right now
+  const now = new Date();
+  const currentHour = String(now.getUTCHours()).padStart(2, "0");
+  const currentMinute = String(now.getUTCMinutes()).padStart(2, "0");
+  const currentTime = `${currentHour}:${currentMinute}`;
+  const currentDay = String(now.getUTCDay()); // 0=Sun, 1=Mon...
+
+  interface ProjectRow {
+    id: string;
+    name: string;
+    notify_enabled: boolean;
+    notify_time: string | null;
+    notify_days: string[] | null;
+  }
+
+  const activeProjects = projects.filter((p: ProjectRow) => {
+    if (!p.notify_enabled) return false;
+    const projectTime = p.notify_time || "08:00";
+    const projectDays = p.notify_days || ["1", "2", "3", "4", "5"];
+    // Check if current day is in the project's notify days
+    if (!projectDays.includes(currentDay)) return false;
+    // Check if current time matches (within 30 min window)
+    const [pH, pM] = projectTime.split(":").map(Number);
+    const [cH, cM] = currentTime.split(":").map(Number);
+    const projectMinutes = pH * 60 + pM;
+    const currentMinutes = cH * 60 + cM;
+    return Math.abs(currentMinutes - projectMinutes) <= 30;
+  });
+
+  if (activeProjects.length === 0) return;
+
+  const projectIds = activeProjects.map((p: ProjectRow) => p.id);
+  const projectMap = new Map(activeProjects.map((p: ProjectRow) => [p.id, p.name]));
 
   // Get active tasks with due dates
   const { data: tasks } = await supabase

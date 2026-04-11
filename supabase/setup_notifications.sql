@@ -11,11 +11,12 @@
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
--- 2. Create the cron job that calls the Edge Function every day at 8:00 AM UTC
--- Adjust the schedule as needed (cron format: minute hour day month weekday)
+-- 2. Create the cron job that runs every 30 min to check per-project schedules
+-- The Edge Function filters which projects should be notified based on their
+-- individual notify_time and notify_days settings
 select cron.schedule(
   'fokus-daily-notifications',    -- job name
-  '0 8 * * 1-5',                  -- 8:00 AM UTC, Monday to Friday
+  '*/30 * * * *',                 -- every 30 minutes
   $$
   select net.http_post(
     url := current_setting('app.settings.supabase_url') || '/functions/v1/notify',

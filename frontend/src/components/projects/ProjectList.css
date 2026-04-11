@@ -54,6 +54,19 @@
   border-radius: 50%;
 }
 
+.notify-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #22c55e;
+  background: #f0fdf4;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 4px;
+}
+
 .project-progress {
   margin: 8px 0;
 }
@@ -92,6 +105,63 @@
 .project-actions {
   display: flex;
   gap: 4px;
+}
+
+/* Notification config */
+.notify-section {
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+}
+
+.notify-section .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.notify-section .checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #22c55e;
+}
+
+.notify-config {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: var(--color-bg);
+  border-radius: var(--radius);
+}
+
+.day-picker {
+  display: flex;
+  gap: 4px;
+}
+
+.day-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.day-btn:hover {
+  border-color: var(--color-primary);
+}
+
+.day-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
 }
 
 .icon-btn {

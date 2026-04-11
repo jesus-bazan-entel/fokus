@@ -53,12 +53,32 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [color, setColor] = useState(COLORS[0])
+  const [notifyEnabled, setNotifyEnabled] = useState(false)
+  const [notifyTime, setNotifyTime] = useState('08:00')
+  const [notifyDays, setNotifyDays] = useState<string[]>(['1', '2', '3', '4', '5'])
+
+  const WEEK_DAYS = [
+    { value: '1', label: 'Lu' },
+    { value: '2', label: 'Ma' },
+    { value: '3', label: 'Mi' },
+    { value: '4', label: 'Ju' },
+    { value: '5', label: 'Vi' },
+    { value: '6', label: 'Sa' },
+    { value: '0', label: 'Do' },
+  ]
+
+  const toggleDay = (day: string) => {
+    setNotifyDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])
+  }
 
   const openNew = () => {
     setEditing(null)
     setName('')
     setDescription('')
     setColor(COLORS[0])
+    setNotifyEnabled(false)
+    setNotifyTime('08:00')
+    setNotifyDays(['1', '2', '3', '4', '5'])
     setShowForm(true)
   }
 
@@ -67,12 +87,21 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
     setName(p.name)
     setDescription(p.description)
     setColor(p.color)
+    setNotifyEnabled(p.notify_enabled ?? false)
+    setNotifyTime(p.notify_time || '08:00')
+    setNotifyDays(p.notify_days || ['1', '2', '3', '4', '5'])
     setShowForm(true)
   }
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
-    onSave({ ...(editing ? { id: editing.id } : {}), name, description, color })
+    onSave({
+      ...(editing ? { id: editing.id } : {}),
+      name, description, color,
+      notify_enabled: notifyEnabled,
+      notify_time: notifyTime,
+      notify_days: notifyDays,
+    })
     setShowForm(false)
   }
 
@@ -308,6 +337,36 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
                   ))}
                 </div>
               </div>
+              <div className="notify-section">
+                <label className="checkbox-label">
+                  <input type="checkbox" checked={notifyEnabled} onChange={e => setNotifyEnabled(e.target.checked)} />
+                  <strong>Activar alertas WhatsApp para este proyecto</strong>
+                </label>
+                {notifyEnabled && (
+                  <div className="notify-config">
+                    <div className="form-group">
+                      <label>Hora de alerta</label>
+                      <input className="input" type="time" value={notifyTime} onChange={e => setNotifyTime(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label>Dias de alerta</label>
+                      <div className="day-picker">
+                        {WEEK_DAYS.map(d => (
+                          <button
+                            key={d.value}
+                            type="button"
+                            className={`day-btn ${notifyDays.includes(d.value) ? 'active' : ''}`}
+                            onClick={() => toggleDay(d.value)}
+                          >
+                            {d.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="dialog-actions">
                 <div style={{ flex: 1 }} />
                 <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancelar</button>
@@ -337,6 +396,9 @@ export default function ProjectList({ projects, tasks, onSave, onDelete, onImpor
                   <StatusBadge status={computedStatus} />
                 </div>
                 <p className="project-desc">{p.description}</p>
+                {p.notify_enabled && (
+                  <span className="notify-badge">&#128276; {p.notify_time || '08:00'}</span>
+                )}
                 <ProgressBar tasks={pTasks} />
                 <div className="project-actions">
                   <button className="icon-btn btn-table" onClick={() => setTableProject(p)} title="Ver tabla de tareas">&#9638;</button>
