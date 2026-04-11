@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage'
 import KanbanPage from './pages/KanbanPage'
 import EisenhowerPage from './pages/EisenhowerPage'
 import ProjectsPage from './pages/ProjectsPage'
+import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
   const { user, loading, signIn, signUp, signOut } = useAuth()
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/kanban" element={<KanbanPage />} />
           <Route path="/eisenhower" element={<EisenhowerPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </Layout>
     </WorkspaceProvider>

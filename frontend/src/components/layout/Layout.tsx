@@ -68,6 +68,10 @@ export default function Layout({ user, onSignOut, children }: Props) {
             <span className="nav-icon">&#9776;</span>
             {!collapsed && <span>Proyectos</span>}
           </NavLink>
+          <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} title="Configuracion">
+            <span className="nav-icon">&#9881;</span>
+            {!collapsed && <span>Settings</span>}
+          </NavLink>
         </nav>
 
         <div className="sidebar-footer">
