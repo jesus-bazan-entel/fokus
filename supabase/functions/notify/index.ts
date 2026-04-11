@@ -221,11 +221,16 @@ async function processUser(settings: UserSettings) {
   if (!projects || projects.length === 0) return;
 
   // Filter projects that should be notified right now
+  // User configures time in Peru timezone (UTC-5), so we convert current UTC to Peru time
   const now = new Date();
-  const currentHour = String(now.getUTCHours()).padStart(2, "0");
-  const currentMinute = String(now.getUTCMinutes()).padStart(2, "0");
+  const peruOffset = -5; // UTC-5
+  const peruTime = new Date(now.getTime() + peruOffset * 60 * 60 * 1000);
+  const currentHour = String(peruTime.getUTCHours()).padStart(2, "0");
+  const currentMinute = String(peruTime.getUTCMinutes()).padStart(2, "0");
   const currentTime = `${currentHour}:${currentMinute}`;
-  const currentDay = String(now.getUTCDay()); // 0=Sun, 1=Mon...
+  const currentDay = String(peruTime.getUTCDay()); // 0=Sun, 1=Mon...
+
+  console.log(`Current Peru time: ${currentTime}, day: ${currentDay}`);
 
   interface ProjectRow {
     id: string;
@@ -249,7 +254,13 @@ async function processUser(settings: UserSettings) {
     return Math.abs(currentMinutes - projectMinutes) <= 30;
   });
 
-  if (activeProjects.length === 0) return;
+  console.log(`Projects with notify_enabled: ${projects.filter((p: ProjectRow) => p.notify_enabled).length}`);
+  console.log(`Projects matching current time/day: ${activeProjects.length}`);
+
+  if (activeProjects.length === 0) {
+    console.log("No projects match current schedule. Skipping.");
+    return;
+  }
 
   const projectIds = activeProjects.map((p: ProjectRow) => p.id);
   const projectMap = new Map(activeProjects.map((p: ProjectRow) => [p.id, p.name]));
