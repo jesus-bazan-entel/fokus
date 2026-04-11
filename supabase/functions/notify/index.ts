@@ -3,9 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") || "";
-const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") || "";
-const TWILIO_WHATSAPP_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM") || "whatsapp:+14155238886";
+// Infobip WhatsApp
+const INFOBIP_API_KEY = Deno.env.get("INFOBIP_API_KEY") || "";
+const INFOBIP_BASE_URL = Deno.env.get("INFOBIP_BASE_URL") || "";
+const INFOBIP_WHATSAPP_FROM = Deno.env.get("INFOBIP_WHATSAPP_FROM") || "";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
@@ -133,34 +134,35 @@ async function sendEmail(to: string, subject: string, html: string) {
 }
 
 async function sendWhatsApp(to: string, message: string) {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-    console.log("Twilio credentials not set, skipping WhatsApp");
+  if (!INFOBIP_API_KEY || !INFOBIP_BASE_URL) {
+    console.log("Infobip credentials not set, skipping WhatsApp");
     return;
   }
 
-  const toFormatted = to.startsWith("whatsapp:") ? to : `whatsapp:${to}`;
-  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-
-  const body = new URLSearchParams({
-    From: TWILIO_WHATSAPP_FROM,
-    To: toFormatted,
-    Body: message,
-  });
+  // Clean phone number: remove spaces, ensure starts with country code
+  const cleanPhone = to.replace(/[\s\-\(\)]/g, "").replace(/^(\+)/, "");
+  const url = `https://${INFOBIP_BASE_URL}/whatsapp/1/message/text`;
 
   const res = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
-      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `App ${INFOBIP_API_KEY}`,
+      "Content-Type": "application/json",
     },
-    body: body.toString(),
+    body: JSON.stringify({
+      from: INFOBIP_WHATSAPP_FROM,
+      to: cleanPhone,
+      content: {
+        text: message,
+      },
+    }),
   });
 
   if (!res.ok) {
     const err = await res.text();
     console.error(`WhatsApp to ${to} failed:`, err);
   } else {
-    console.log(`WhatsApp sent to ${to}`);
+    console.log(`WhatsApp sent to ${to} via Infobip`);
   }
 }
 
