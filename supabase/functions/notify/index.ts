@@ -133,36 +133,74 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
-async function sendWhatsApp(to: string, message: string) {
+async function sendWhatsApp(to: string, message: string, userName: string) {
   if (!INFOBIP_API_KEY || !INFOBIP_BASE_URL) {
     console.log("Infobip credentials not set, skipping WhatsApp");
     return;
   }
 
-  // Clean phone number: remove spaces, ensure starts with country code
-  const cleanPhone = to.replace(/[\s\-\(\)]/g, "").replace(/^(\+)/, "");
-  const url = `https://${INFOBIP_BASE_URL}/whatsapp/1/message/text`;
+  // Clean phone number: remove +, spaces, dashes
+  const cleanPhone = to.replace(/[\s\-\(\)\+]/g, "");
+  const from = INFOBIP_WHATSAPP_FROM || "447860088970";
 
-  const res = await fetch(url, {
+  // First try: send as a free-form text message (works if 24h window is open)
+  const textUrl = `https://${INFOBIP_BASE_URL}/whatsapp/1/message/text`;
+  const textRes = await fetch(textUrl, {
     method: "POST",
     headers: {
       Authorization: `App ${INFOBIP_API_KEY}`,
       "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify({
-      from: INFOBIP_WHATSAPP_FROM,
+      from,
       to: cleanPhone,
-      content: {
-        text: message,
-      },
+      content: { text: message },
     }),
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    console.error(`WhatsApp to ${to} failed:`, err);
+  if (textRes.ok) {
+    console.log(`WhatsApp text sent to ${cleanPhone} via Infobip`);
+    return;
+  }
+
+  // Fallback: send as template message (always works, even outside 24h window)
+  console.log("Text message failed, trying template...");
+  const templateUrl = `https://${INFOBIP_BASE_URL}/whatsapp/1/message/template`;
+  const templateRes = await fetch(templateUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `App ${INFOBIP_API_KEY}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      messages: [
+        {
+          from,
+          to: cleanPhone,
+          content: {
+            templateName: "test_whatsapp_template_en",
+            templateData: {
+              body: {
+                placeholders: [
+                  `${userName}: ${message.substring(0, 500)}`,
+                ],
+              },
+            },
+            language: "en",
+          },
+        },
+      ],
+    }),
+  });
+
+  if (!templateRes.ok) {
+    const err = await templateRes.text();
+    console.error(`WhatsApp template to ${cleanPhone} failed:`, err);
   } else {
-    console.log(`WhatsApp sent to ${to} via Infobip`);
+    const result = await templateRes.json();
+    console.log(`WhatsApp template sent to ${cleanPhone}:`, JSON.stringify(result));
   }
 }
 
@@ -279,7 +317,7 @@ async function processUser(settings: UserSettings) {
   // Send WhatsApp
   if (settings.notify_whatsapp && settings.phone) {
     const message = buildWhatsAppMessage(userName, alerts);
-    await sendWhatsApp(settings.phone, message);
+    await sendWhatsApp(settings.phone, message, userName);
   }
 
   return { user: userEmail, alerts: alerts.length };
