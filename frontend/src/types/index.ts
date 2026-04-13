@@ -5,7 +5,7 @@ export interface User {
   avatar_url?: string
 }
 
-export type ProjectStatus = 'on_track' | 'at_risk' | 'delayed' | 'on_hold'
+export type ProjectStatus = 'on_track' | 'at_risk' | 'delayed' | 'on_hold' | 'completed'
 export type Workspace = 'personal' | 'corporate'
 
 export const WORKSPACE_CONFIG: Record<Workspace, { label: string; icon: string; color: string }> = {
@@ -105,6 +105,11 @@ export function getTaskAlerts(tasks: Task[], dueSoonDays = 3): TaskAlert[] {
 }
 
 export function computeProjectStatus(tasks: Task[]): ProjectStatus {
+  // If there are tasks and all of them are done, the project is completed
+  if (tasks.length > 0 && tasks.every(t => t.status === 'done')) {
+    return 'completed'
+  }
+
   const activeTasks = tasks.filter(t => t.status !== 'done')
   if (activeTasks.length === 0) return 'on_track'
 
@@ -142,6 +147,7 @@ export function computeProjectStatus(tasks: Task[]): ProjectStatus {
 }
 
 export const PROJECT_STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string; bg: string; icon: string }> = {
+  completed: { label: 'Completado', color: '#0891b2', bg: '#ecfeff', icon: '✓' },
   on_track: { label: 'A tiempo', color: '#22c55e', bg: '#f0fdf4', icon: '●' },
   at_risk: { label: 'En riesgo', color: '#f59e0b', bg: '#fffbeb', icon: '●' },
   delayed: { label: 'Retrasado', color: '#ef4444', bg: '#fef2f2', icon: '●' },

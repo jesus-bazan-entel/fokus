@@ -54,14 +54,15 @@ function Column({ id, title, color, count, children }: { id: string; title: stri
   )
 }
 
-function ProjectSection({ group, collapsed, onToggle, children }: {
-  group: ProjectGroup; collapsed: boolean; onToggle: () => void; children: React.ReactNode
+function ProjectSection({ group, collapsed, onToggle, completed, children }: {
+  group: ProjectGroup; collapsed: boolean; onToggle: () => void; completed?: boolean; children: React.ReactNode
 }) {
   return (
-    <div className="project-section">
+    <div className={`project-section ${completed ? 'project-section-completed' : ''}`}>
       <button className="project-section-header" onClick={onToggle}>
         <span className="project-section-dot" style={{ background: group.projectColor }} />
         <span className="project-section-name">{group.projectName}</span>
+        {completed && <span className="project-completed-badge">✓ Completado</span>}
         <span className="project-section-count">{group.tasks.length}</span>
         <span className={`project-section-toggle ${collapsed ? '' : 'open'}`}>{collapsed ? '+' : '−'}</span>
       </button>
@@ -82,6 +83,22 @@ export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask 
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   )
+
+  // Compute which projects are fully completed (all tasks in 'done' status)
+  const completedProjects = useMemo(() => {
+    const completed = new Set<string>()
+    const projectTasks = new Map<string, Task[]>()
+    for (const t of tasks) {
+      if (!projectTasks.has(t.project_id)) projectTasks.set(t.project_id, [])
+      projectTasks.get(t.project_id)!.push(t)
+    }
+    for (const [pid, pTasks] of projectTasks) {
+      if (pTasks.length > 0 && pTasks.every(t => t.status === 'done')) {
+        completed.add(pid)
+      }
+    }
+    return completed
+  }, [tasks])
 
   const getColumnTasks = (status: TaskStatus) =>
     tasks.filter(t => t.status === status).sort((a, b) => a.position - b.position)
@@ -172,6 +189,7 @@ export default function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask 
                         group={group}
                         collapsed={!expandedSections.has(sectionKey)}
                         onToggle={() => toggleSection(sectionKey)}
+                        completed={completedProjects.has(group.projectId)}
                       >
                         {group.tasks.map(task => (
                           <KanbanCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
