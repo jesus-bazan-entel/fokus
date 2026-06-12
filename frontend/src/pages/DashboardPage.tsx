@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { tasksApi, projectsApi } from '../lib/api'
 import { useWorkspace } from '../context/WorkspaceContext'
+import TaskDialog from '../components/TaskDialog'
 import type { Task, TaskStatus, Project } from '../types'
 import './DashboardPage.css'
 
@@ -28,6 +29,8 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [showDialog, setShowDialog] = useState(false)
 
   const loadData = useCallback(async () => {
     try {
@@ -109,6 +112,35 @@ export default function DashboardPage() {
   const getProjectColor = (projectId: string) =>
     projects.find(p => p.id === projectId)?.color || '#94a3b8'
 
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task)
+    setShowDialog(true)
+  }
+
+  const handleSaveTask = async (data: Partial<Task>) => {
+    try {
+      if (data.id) {
+        await tasksApi.update(data.id, data)
+      }
+      await loadData()
+      setShowDialog(false)
+      setSelectedTask(null)
+    } catch (err) {
+      console.error('Error saving task:', err)
+    }
+  }
+
+  const handleDeleteTask = async (id: string) => {
+    try {
+      await tasksApi.delete(id)
+      await loadData()
+      setShowDialog(false)
+      setSelectedTask(null)
+    } catch (err) {
+      console.error('Error deleting task:', err)
+    }
+  }
+
   if (loading) return <p>Cargando dashboard...</p>
 
   return (
@@ -159,6 +191,7 @@ export default function DashboardPage() {
                   <th className="th-due">Fecha limite</th>
                   <th className="th-status">Estado</th>
                   <th className="th-notes">Avance / Notas</th>
+                  <th className="th-edit"></th>
                 </tr>
               </thead>
               <tbody>
@@ -172,6 +205,7 @@ export default function DashboardPage() {
                     saving={saving === task.id}
                     onStatusChange={handleStatusChange}
                     onDescriptionUpdate={handleDescriptionUpdate}
+                    onEdit={handleEditTask}
                   />
                 ))}
               </tbody>
@@ -197,6 +231,7 @@ export default function DashboardPage() {
                   <th className="th-assignee">Responsable</th>
                   <th className="th-status">Estado</th>
                   <th className="th-notes">Avance / Notas</th>
+                  <th className="th-edit"></th>
                 </tr>
               </thead>
               <tbody>
@@ -210,6 +245,7 @@ export default function DashboardPage() {
                     saving={saving === task.id}
                     onStatusChange={handleStatusChange}
                     onDescriptionUpdate={handleDescriptionUpdate}
+                    onEdit={handleEditTask}
                     hideDays
                   />
                 ))}
@@ -218,11 +254,20 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      {showDialog && selectedTask && (
+        <TaskDialog
+          task={selectedTask}
+          projects={projects}
+          onSave={handleSaveTask}
+          onDelete={handleDeleteTask}
+          onClose={() => { setShowDialog(false); setSelectedTask(null) }}
+        />
+      )}
     </div>
   )
 }
 
-function TaskRow({ task, index, projectName, projectColor, saving, onStatusChange, onDescriptionUpdate, hideDays }: {
+function TaskRow({ task, index, projectName, projectColor, saving, onStatusChange, onDescriptionUpdate, onEdit, hideDays }: {
   task: OverdueTask
   index: number
   projectName: string
@@ -230,6 +275,7 @@ function TaskRow({ task, index, projectName, projectColor, saving, onStatusChang
   saving: boolean
   onStatusChange: (id: string, status: TaskStatus) => void
   onDescriptionUpdate: (id: string, desc: string) => void
+  onEdit: (task: Task) => void
   hideDays?: boolean
 }) {
   const [editingNotes, setEditingNotes] = useState(false)
@@ -294,6 +340,9 @@ function TaskRow({ task, index, projectName, projectColor, saving, onStatusChang
             {task.description || 'Click para agregar notas...'}
           </span>
         )}
+      </td>
+      <td className="td-edit">
+        <button className="edit-row-btn" onClick={() => onEdit(task)} title="Editar tarea">&#9998;</button>
       </td>
     </tr>
   )

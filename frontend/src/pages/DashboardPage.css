@@ -242,6 +242,32 @@
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
+.th-edit { width: 40px; }
+
+.td-edit { text-align: center; }
+
+.edit-row-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.dashboard-table tbody tr:hover .edit-row-btn {
+  opacity: 1;
+}
+
+.edit-row-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+}
+
 @media (max-width: 768px) {
   .dashboard-summary {
     grid-template-columns: repeat(2, 1fr);
