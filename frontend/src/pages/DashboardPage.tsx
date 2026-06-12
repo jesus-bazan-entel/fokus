@@ -112,6 +112,41 @@ export default function DashboardPage() {
   const getProjectColor = (projectId: string) =>
     projects.find(p => p.id === projectId)?.color || '#94a3b8'
 
+  // Group overdue tasks by project
+  const groupByProject = (taskList: OverdueTask[]) => {
+    const map = new Map<string, { name: string; color: string; tasks: OverdueTask[] }>()
+    for (const t of taskList) {
+      const pid = t.project_id
+      if (!map.has(pid)) {
+        map.set(pid, {
+          name: getProjectName(pid),
+          color: getProjectColor(pid),
+          tasks: [],
+        })
+      }
+      map.get(pid)!.tasks.push(t)
+    }
+    // Sort groups by most overdue task
+    return Array.from(map.values()).sort((a, b) => {
+      const maxA = Math.max(...a.tasks.map(t => t.daysOverdue))
+      const maxB = Math.max(...b.tasks.map(t => t.daysOverdue))
+      return maxB - maxA
+    })
+  }
+
+  const overdueGroups = groupByProject(overdueTasks)
+  const dueTodayGroups = groupByProject(dueTodayTasks.map(t => ({ ...t, daysOverdue: 0 })))
+
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const toggleGroup = (key: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
   const handleEditTask = (task: Task) => {
     setSelectedTask(task)
     setShowDialog(true)
@@ -179,38 +214,51 @@ export default function DashboardPage() {
             <p>No hay tareas atrasadas. Todo al dia.</p>
           </div>
         ) : (
-          <div className="dashboard-table-container">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th className="th-days">Atraso</th>
-                  <th className="th-priority">Prior.</th>
-                  <th className="th-task">Tarea</th>
-                  <th className="th-project">Proyecto</th>
-                  <th className="th-assignee">Responsable</th>
-                  <th className="th-due">Fecha limite</th>
-                  <th className="th-status">Estado</th>
-                  <th className="th-notes">Avance / Notas</th>
-                  <th className="th-edit"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {overdueTasks.map((task, i) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    index={i}
-                    projectName={getProjectName(task.project_id)}
-                    projectColor={getProjectColor(task.project_id)}
-                    saving={saving === task.id}
-                    onStatusChange={handleStatusChange}
-                    onDescriptionUpdate={handleDescriptionUpdate}
-                    onEdit={handleEditTask}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          overdueGroups.map(group => {
+            const groupKey = `overdue-${group.name}`
+            const isCollapsed = collapsedGroups.has(groupKey)
+            return (
+              <div key={groupKey} className="dashboard-project-group">
+                <button className="dashboard-group-header" onClick={() => toggleGroup(groupKey)}>
+                  <span className="dashboard-group-dot" style={{ background: group.color }} />
+                  <span className="dashboard-group-name">{group.name}</span>
+                  <span className="dashboard-group-count">{group.tasks.length}</span>
+                  <span className="dashboard-group-toggle">{isCollapsed ? '+' : '−'}</span>
+                </button>
+                {!isCollapsed && (
+                  <div className="dashboard-table-container">
+                    <table className="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th className="th-days">Atraso</th>
+                          <th className="th-priority">Prior.</th>
+                          <th className="th-task">Tarea</th>
+                          <th className="th-assignee">Responsable</th>
+                          <th className="th-due">Fecha limite</th>
+                          <th className="th-status">Estado</th>
+                          <th className="th-notes">Avance / Notas</th>
+                          <th className="th-edit"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.tasks.map((task, i) => (
+                          <TaskRow
+                            key={task.id}
+                            task={task}
+                            index={i}
+                            saving={saving === task.id}
+                            onStatusChange={handleStatusChange}
+                            onDescriptionUpdate={handleDescriptionUpdate}
+                            onEdit={handleEditTask}
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )
+          })
         )}
       </div>
 
@@ -221,17 +269,28 @@ export default function DashboardPage() {
             Vencen hoy
             <span className="section-count">{dueTodayTasks.length}</span>
           </h3>
-          <div className="dashboard-table-container">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th className="th-priority">Prior.</th>
-                  <th className="th-task">Tarea</th>
-                  <th className="th-project">Proyecto</th>
-                  <th className="th-assignee">Responsable</th>
-                  <th className="th-status">Estado</th>
-                  <th className="th-notes">Avance / Notas</th>
-                  <th className="th-edit"></th>
+          {dueTodayGroups.map(group => {
+            const groupKey = `today-${group.name}`
+            const isCollapsed = collapsedGroups.has(groupKey)
+            return (
+              <div key={groupKey} className="dashboard-project-group">
+                <button className="dashboard-group-header" onClick={() => toggleGroup(groupKey)}>
+                  <span className="dashboard-group-dot" style={{ background: group.color }} />
+                  <span className="dashboard-group-name">{group.name}</span>
+                  <span className="dashboard-group-count">{group.tasks.length}</span>
+                  <span className="dashboard-group-toggle">{isCollapsed ? '+' : '−'}</span>
+                </button>
+                {!isCollapsed && (
+                  <div className="dashboard-table-container">
+                    <table className="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th className="th-priority">Prior.</th>
+                          <th className="th-task">Tarea</th>
+                          <th className="th-assignee">Responsable</th>
+                          <th className="th-status">Estado</th>
+                          <th className="th-notes">Avance / Notas</th>
+                          <th className="th-edit"></th>
                 </tr>
               </thead>
               <tbody>
@@ -240,8 +299,6 @@ export default function DashboardPage() {
                     key={task.id}
                     task={{ ...task, daysOverdue: 0 } as OverdueTask}
                     index={i}
-                    projectName={getProjectName(task.project_id)}
-                    projectColor={getProjectColor(task.project_id)}
                     saving={saving === task.id}
                     onStatusChange={handleStatusChange}
                     onDescriptionUpdate={handleDescriptionUpdate}
@@ -252,6 +309,10 @@ export default function DashboardPage() {
               </tbody>
             </table>
           </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
       {showDialog && selectedTask && (
@@ -267,11 +328,9 @@ export default function DashboardPage() {
   )
 }
 
-function TaskRow({ task, index, projectName, projectColor, saving, onStatusChange, onDescriptionUpdate, onEdit, hideDays }: {
+function TaskRow({ task, index, saving, onStatusChange, onDescriptionUpdate, onEdit, hideDays }: {
   task: OverdueTask
   index: number
-  projectName: string
-  projectColor: string
   saving: boolean
   onStatusChange: (id: string, status: TaskStatus) => void
   onDescriptionUpdate: (id: string, desc: string) => void
@@ -305,11 +364,6 @@ function TaskRow({ task, index, projectName, projectColor, saving, onStatusChang
         {task.importance === 'important' && <span className={`priority-important ${importanceClass}`}>*</span>}
       </td>
       <td className="td-task-name">{task.title}</td>
-      <td className="td-project">
-        <span className="project-pill" style={{ background: projectColor + '20', color: projectColor }}>
-          {projectName}
-        </span>
-      </td>
       <td className="td-assignee">{task.assignee_name || '-'}</td>
       {!hideDays && (
         <td className="td-due">{task.due_date ? new Date(task.due_date).toLocaleDateString('es-PE') : '-'}</td>

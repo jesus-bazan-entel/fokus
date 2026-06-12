@@ -81,6 +81,65 @@
   color: var(--color-text-secondary);
 }
 
+/* Project groups */
+.dashboard-project-group {
+  margin-bottom: 12px;
+}
+
+.dashboard-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.dashboard-group-header:hover {
+  background: var(--color-bg);
+}
+
+.dashboard-group-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dashboard-group-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  flex: 1;
+  text-align: left;
+}
+
+.dashboard-group-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  background: var(--color-text-secondary);
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+
+.dashboard-group-toggle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  width: 20px;
+  text-align: center;
+}
+
+.dashboard-project-group .dashboard-table-container {
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
 /* Table */
 .dashboard-table-container {
   border: 1px solid var(--color-border);
