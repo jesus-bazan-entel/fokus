@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage'
 import KanbanPage from './pages/KanbanPage'
 import EisenhowerPage from './pages/EisenhowerPage'
 import ProjectsPage from './pages/ProjectsPage'
+import DashboardPage from './pages/DashboardPage'
 import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
@@ -27,7 +28,8 @@ export default function App() {
     <WorkspaceProvider>
       <Layout user={user} onSignOut={signOut}>
         <Routes>
-          <Route path="/" element={<Navigate to="/kanban" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/kanban" element={<KanbanPage />} />
           <Route path="/eisenhower" element={<EisenhowerPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
